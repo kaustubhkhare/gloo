@@ -46,7 +46,7 @@ int MPI_Send(
     ubuf->waitSend();
 }
 
-void run() {
+void run(int rank, int size) {
 
     if (rank == 0) {
         int dst = 1;
@@ -89,7 +89,7 @@ void run() {
         }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+//    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void run2(int rank) {
@@ -147,6 +147,6 @@ int main(int argc, char* argv[]) {
     int size = atoi(getenv("SIZE"));
 
     init(rank, size, prefix);
-    run2(rank);
+    run(rank, size);
     return 0;
 }
