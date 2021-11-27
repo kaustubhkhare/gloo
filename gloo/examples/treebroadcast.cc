@@ -100,6 +100,7 @@ void run2(int rank) {
     std::cout << " assigned zeros " << std::endl;
     if (rank == 0) {
         std::cout << " sending from 0 " << std::endl;
+        a[2] = 123;
         MPI_Send(a, sizeof(a), 1, 100, MPI_COMM_WORLD);
         std::cout << " sent " << std::endl;
     } else {
