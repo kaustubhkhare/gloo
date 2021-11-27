@@ -11,6 +11,10 @@
 #include <gloo/barrier.h>
 #include "gloo/mpi/context.h"
 #include "gloo/transport/tcp/device.h"
+#include "gloo/rendezvous/context.h"
+#include "gloo/rendezvous/file_store.h"
+#include "gloo/rendezvous/prefix_store.h"
+
 
 #include <unistd.h>
 #include <limits.h>
@@ -88,15 +92,39 @@ void run() {
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
-void init() {
+void run2(int rank) {
+    int a[8];
+    gethostname(hostname, HOST_NAME_MAX);
+    std::cout << "running " << rank << " @ " << hostname << "\n";
+    bzero(a, sizeof(a));
+    std::cout << " assigned zeros " << std::endl;
+    if (rank == 0) {
+        std::cout << " sending from 0 " << std::endl;
+        MPI_Send(a, sizeof(a), 1, 100, MPI_COMM_WORLD);
+        std::cout << " sent " << std::endl;
+    } else {
+        std::cout << " receiving at 1 " << std::endl;
+        MPI_Recv(a, sizeof(a), 0, 100, MPI_COMM_WORLD);
+        std::cout << " received " << std::endl;
+        std::cout << "\t";
+        for (int i = 0; i < sizeof(a) / sizeof(*a); i++) {
+            std::cout << a[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void init(int rank, int size, std::string prefix) {
     gloo::transport::tcp::attr attr;
     attr.iface = "enp6s0f0";
 //    attr.iface = "lo";
     attr.ai_family = AF_UNSPEC;
 
     auto dev = gloo::transport::tcp::CreateDevice(attr);
-    auto context = gloo::mpi::Context::createManaged();
-    context->connectFullMesh(dev);
+    auto fileStore = gloo::rendezvous::FileStore("/proj/uwmadison744-f21-PG0/rendezvous_checkpoint");
+    auto prefixStore = gloo::rendezvous::PrefixStore(prefix, fileStore);
+    auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
+    context->connectFullMesh(prefixStore, dev);
     k_context = std::move(context);
     rank = k_context->rank;
     size = k_context->size;
@@ -105,7 +133,19 @@ void init() {
 }
 
 int main(int argc, char* argv[]) {
-    init();
-    run();
+    if (getenv("PREFIX") == nullptr ||
+        getenv("SIZE") == nullptr ||
+        getenv("RANK") == nullptr) {
+        std::cerr
+                << "Please set environment variables PREFIX, SIZE, and RANK."
+                << std::endl;
+        return 1;
+    }
+    std::string prefix = getenv("PREFIX");
+    int rank = atoi(getenv("RANK"));
+    int size = atoi(getenv("SIZE"));
+
+    init(rank, size, prefix);
+    run2(rank);
     return 0;
 }
