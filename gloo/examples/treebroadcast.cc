@@ -92,6 +92,33 @@ void run(int rank, int size) {
 //    MPI_Barrier(MPI_COMM_WORLD);
 }
 
+void runBcast(int rank, int size) {
+    std::cout << "Bcast " << rank << " " << size << "\n";
+    int buffer[8];
+    int tag = 5643;
+
+    int logn = 1  << ( __builtin_ctz(rank));
+    if (rank == 0) logn = 1  << (__builtin_clz(size));
+    logn >>= 1;
+
+    if (rank != 0) {
+        const int partner = rank ^ (1 << __builtin_ctz(rank));
+        std::cout << "Waiting at " << rank << " for " << partner << "\n";
+        MPI_Recv(buffer, sizeof(buffer), partner, tag, MPI_COMM_WORLD);
+        std::cout << "\tReceived" << "\n";
+    }
+
+    while (logn > 0) {
+        const int partner = rank | logn;
+        if (partner > rank && partner < size) {
+            std::cout << "Sending from " << rank << " to " << partner << "\n";
+            MPI_Send(buffer, sizeof(buffer), partner, tag, MPI_COMM_WORLD);
+            std::cout << "\tSent" << "\n";
+        }
+        logn >>= 1;
+    }
+}
+
 void run2(int rank) {
     int a[8];
     gethostname(hostname, HOST_NAME_MAX);
@@ -121,11 +148,17 @@ void init(int rank, int size, std::string prefix) {
 //    attr.iface = "lo";
     attr.ai_family = AF_UNSPEC;
 
+//    std::cout << "Creating device " << "\n";
     auto dev = gloo::transport::tcp::CreateDevice(attr);
+//    std::cout << "Creating fileStore " << "\n";
     auto fileStore = gloo::rendezvous::FileStore("/proj/uwmadison744-f21-PG0/rendezvous_checkpoint");
+//    std::cout << "Creating prefixStore " << "\n";
     auto prefixStore = gloo::rendezvous::PrefixStore(prefix, fileStore);
+//    std::cout << "Creating context " << "\n";
     auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
+//    std::cout << "Creating fullMesh " << "\n";
     context->connectFullMesh(prefixStore, dev);
+//    std::cout << "Creating kContext " << "\n";
     k_context = std::move(context);
     rank = k_context->rank;
     size = k_context->size;
@@ -146,7 +179,9 @@ int main(int argc, char* argv[]) {
     int rank = atoi(getenv("RANK"));
     int size = atoi(getenv("SIZE"));
 
+    std::cout << "Running init" << "\n";
     init(rank, size, prefix);
-    run(rank, size);
+    std::cout << "Running bcast" << "\n";
+    runBcast(rank, size);
     return 0;
 }
