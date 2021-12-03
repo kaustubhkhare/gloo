@@ -113,7 +113,7 @@ void run(int rank, int size) {
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[] = {22, 111, 223, 32};;
+    int buffer[] = {444, 111, 222, 333};;
     int tag = 5643;
     int val;
 
@@ -137,7 +137,7 @@ void runBcast(int rank, int size) {
     const int partner = (rank + 1) % n;
     const int partnerp = (rank - 1 + n) % n;
     int ri = rank, rp = rank - 1;
-    int count = size;
+    int count = 1;
     if (rp < 0) rp = n - 1;
     for (int i = 0; i < n - 1; ++i) {
         std::cout << "Sending buffer[" <<  ri * count << "] = " << buffer[ri * count]
