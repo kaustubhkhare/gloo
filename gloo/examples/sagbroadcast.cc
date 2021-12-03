@@ -57,8 +57,8 @@ int MPI_SendRecv(
         MPI_Comm comm)
 {
     // Argument is logically const if we're only sending.
-    auto usendbuf = kContext->createUnboundBuffer(const_cast<void*>(sendbuf), bytes);
-    auto urecvbuf = kContext->createUnboundBuffer(const_cast<void*>(recvbuf), bytes);
+    auto usendbuf = kContext->createUnboundBuffer(const_cast<void*>(sendbuf), send_bytes);
+    auto urecvbuf = kContext->createUnboundBuffer(const_cast<void*>(recvbuf), recv_bytes);
     usendbuf->send(dest, tag);
     urecvbuf->recv(src, tag);
     usendbuf->waitSend();
