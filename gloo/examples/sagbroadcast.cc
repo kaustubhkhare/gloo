@@ -57,8 +57,8 @@ int MPI_SendRecv(
         MPI_Comm comm)
 {
     // Argument is logically const if we're only sending.
-    auto usendbuf = kContext->createUnboundBuffer(const_cast<void*>(sendbuf), send_bytes);
-    auto urecvbuf = kContext->createUnboundBuffer(const_cast<void*>(recvbuf), recv_bytes);
+    auto usendbuf = k_context->createUnboundBuffer(const_cast<void*>(sendbuf), send_bytes);
+    auto urecvbuf = k_context->createUnboundBuffer(const_cast<void*>(recvbuf), recv_bytes);
     usendbuf->send(dest, tag);
     urecvbuf->recv(src, tag);
     usendbuf->waitSend();
@@ -113,13 +113,12 @@ void run(int rank, int size) {
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[size];
+    int buffer[] = {22, 111, 223, 32};;
     int tag = 5643;
     int val;
 
     // Scatter
     if (rank == 0) {
-        buffer = {22, 111, 223, 32};
         for (int i = 1; i < size; i++) {
             std::cout << "Sending from 0 to " << rank << "\n";
             val = buffer[i];
@@ -134,6 +133,7 @@ void runBcast(int rank, int size) {
     }
 
     // Ring All gather
+    int n = size;
     const int partner = (rank + 1) % n;
     const int partnerp = (rank - 1 + n) % n;
     int ri = rank, rp = rank - 1;
