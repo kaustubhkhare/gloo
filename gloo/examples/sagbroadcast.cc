@@ -120,7 +120,7 @@ void runBcast(int rank, int size) {
     // Scatter
     if (rank == 0) {
         for (int i = 1; i < size; i++) {
-            std::cout << "Sending from 0 to " << rank << "\n";
+            std::cout << "Sending " << buffer[i] << " from 0 to " << i << "\n";
             val = buffer[i];
             MPI_Send(&val, sizeof(val), i, tag, MPI_COMM_WORLD);
             std::cout << "\tSend" << "\n";
