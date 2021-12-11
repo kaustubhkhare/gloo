@@ -6,7 +6,6 @@
 #include <string>
 #include "gloo/allreduce_ring.h"
 #include <gloo/allreduce.h>
-#include <mpi.h>
 
 #include <gloo/barrier.h>
 #include "gloo/mpi/context.h"
