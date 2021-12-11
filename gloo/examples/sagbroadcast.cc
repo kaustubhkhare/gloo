@@ -6,10 +6,8 @@
 #include <string>
 #include "gloo/allreduce_ring.h"
 #include <gloo/allreduce.h>
-#include <mpi.h>
 
 #include <gloo/barrier.h>
-#include "gloo/mpi/context.h"
 #include "gloo/transport/tcp/device.h"
 #include "gloo/rendezvous/context.h"
 #include "gloo/rendezvous/file_store.h"
@@ -28,8 +26,7 @@ int MPI_Recv(
         void *buf,
         ssize_t bytes,
         int source,
-        int tag,
-        MPI_Comm comm) {
+        int tag) {
     auto ubuf = k_context->createUnboundBuffer(buf, bytes);
     ubuf->recv(source, tag);
     ubuf->waitRecv();
@@ -39,8 +36,7 @@ int MPI_Send(
         const void *cbuf,
         ssize_t bytes,
         int dest,
-        int tag,
-        MPI_Comm comm) {
+        int tag) {
     auto ubuf = k_context->createUnboundBuffer(const_cast<void*>(cbuf), bytes);
     ubuf->send(dest, tag);
     ubuf->waitSend();
@@ -53,8 +49,7 @@ int MPI_SendRecv(
         ssize_t recv_bytes,
         int dest,
         int src,
-        int tag,
-        MPI_Comm comm)
+        int tag)
 {
     auto usendbuf = k_context->createUnboundBuffer(const_cast<void*>(sendbuf), send_bytes);
     auto urecvbuf = k_context->createUnboundBuffer(const_cast<void*>(recvbuf), recv_bytes);
@@ -75,12 +70,12 @@ void runBcast(int rank, int size) {
         for (int i = 1; i < size; i++) {
             std::cout << "Sending " << buffer[i] << " from 0 to " << i << "\n";
             val = buffer[i];
-            MPI_Send(&val, sizeof(val), i, tag, MPI_COMM_WORLD);
+            MPI_Send(&val, sizeof(val), i, tag);
             std::cout << "\tSend" << "\n";
         }
     } else {
         std::cout << "Process waiting at " << rank << " for 0" << "\n";
-        MPI_Recv(&val, sizeof(val), 0, tag, MPI_COMM_WORLD);
+        MPI_Recv(&val, sizeof(val), 0, tag);
         std::cout << "\tReceived " << val << " at " << rank << "\n";
         buffer[rank] = val;
     }
@@ -98,7 +93,7 @@ void runBcast(int rank, int size) {
         << partnerp << " in buffer[" << rp * count << "]\n";
         MPI_SendRecv(buffer + ri * count, buffer + rp * count,
                      sizeof(buffer[ri * count]), sizeof(buffer[rp * count]),
-                     partner, partnerp, tag, MPI_COMM_WORLD);
+                     partner, partnerp, tag);
         std::cout << "\tSent=" + buffer[ri * count] << " Received=" << buffer[rp * count]
         << "\n";
         if (--ri == -1) ri = n-1;

@@ -6,10 +6,8 @@
 #include <string>
 #include "gloo/allreduce_ring.h"
 #include <gloo/allreduce.h>
-#include <mpi.h>
 
 #include <gloo/barrier.h>
-#include "gloo/mpi/context.h"
 #include "gloo/transport/tcp/device.h"
 #include "gloo/rendezvous/context.h"
 #include "gloo/rendezvous/file_store.h"
@@ -28,8 +26,7 @@ int MPI_Recv(
         void *buf,
         ssize_t bytes,
         int source,
-        int tag,
-        MPI_Comm comm) {
+        int tag) {
     auto ubuf = k_context->createUnboundBuffer(buf, bytes);
     ubuf->recv(source, tag);
     ubuf->waitRecv();
@@ -39,8 +36,7 @@ int MPI_Send(
         const void *cbuf,
         ssize_t bytes,
         int dest,
-        int tag,
-        MPI_Comm comm) {
+        int tag) {
     auto ubuf = k_context->createUnboundBuffer(const_cast<void*>(cbuf), bytes);
     ubuf->send(dest, tag);
     ubuf->waitSend();
@@ -52,13 +48,13 @@ void run(int rank, int size) {
         int dst = 1;
         int a[] = {1, 1, 2, 2, 3, 3, 4, 4};
         int tag = 1234;
-        MPI_Send(a, sizeof(a), dst, tag, MPI_COMM_WORLD);
+        MPI_Send(a, sizeof(a), dst, tag);
         dst = 2;
-        MPI_Send(a, sizeof(a), dst, tag, MPI_COMM_WORLD);
+        MPI_Send(a, sizeof(a), dst, tag);
 //        for (int dst = 1; dst < size; dst++) {
 //            int a[] = {dst, 1, 2, 2, 3, 3, 4, 4};
 //            int tag = 1234;
-//            MPI_Send(a, sizeof(a), dst, tag, MPI_COMM_WORLD);
+//            MPI_Send(a, sizeof(a), dst, tag);
 //        }
     } else {
         int src = 0;
@@ -69,7 +65,7 @@ void run(int rank, int size) {
         }
         int tag = 1234;
         int a[8];
-        MPI_Recv(a, sizeof(a), src, tag, MPI_COMM_WORLD);
+        MPI_Recv(a, sizeof(a), src, tag);
 	    gethostname(hostname, HOST_NAME_MAX);
         std::cout << "Received from rank " << src << " to " << rank << " on " << hostname << std::endl;
         std::cout << "\t";
@@ -81,11 +77,11 @@ void run(int rank, int size) {
         int dst2 = 2 * rank + 2;
         if (dst1 < size) {
             std::cout << "Sending from " << rank << " to " << dst1 << std::endl;
-            MPI_Send(a, sizeof(a), dst1, tag, MPI_COMM_WORLD);
+            MPI_Send(a, sizeof(a), dst1, tag);
         }
         if (dst2 < size) {
             std::cout << "Sending from " << rank << " to " << dst2 << std::endl;
-            MPI_Send(a, sizeof(a), dst2, tag, MPI_COMM_WORLD);
+            MPI_Send(a, sizeof(a), dst2, tag);
         }
     }
 
@@ -104,7 +100,7 @@ void runBcast(int rank, int size) {
     if (rank != 0) {
         const int partner = rank ^ (1 << __builtin_ctz(rank));
         std::cout << "Waiting at " << rank << " for " << partner << "\n";
-        MPI_Recv(buffer, sizeof(buffer), partner, tag, MPI_COMM_WORLD);
+        MPI_Recv(buffer, sizeof(buffer), partner, tag);
         std::cout << "\tReceived" << "\n";
     }
 
@@ -112,7 +108,7 @@ void runBcast(int rank, int size) {
         const int partner = rank | logn;
         if (partner > rank && partner < size) {
             std::cout << "Sending from " << rank << " to " << partner << "\n";
-            MPI_Send(buffer, sizeof(buffer), partner, tag, MPI_COMM_WORLD);
+            MPI_Send(buffer, sizeof(buffer), partner, tag);
             std::cout << "\tSent" << "\n";
         }
         logn >>= 1;
@@ -128,11 +124,11 @@ void run2(int rank) {
     if (rank == 0) {
         std::cout << " sending from 0 " << std::endl;
         a[2] = 123;
-        MPI_Send(a, sizeof(a), 1, 100, MPI_COMM_WORLD);
+        MPI_Send(a, sizeof(a), 1, 100);
         std::cout << " sent " << std::endl;
     } else {
         std::cout << " receiving at 1 " << std::endl;
-        MPI_Recv(a, sizeof(a), 0, 100, MPI_COMM_WORLD);
+        MPI_Recv(a, sizeof(a), 0, 100);
         std::cout << " received " << std::endl;
         std::cout << "\t";
         for (int i = 0; i < sizeof(a) / sizeof(*a); i++) {
