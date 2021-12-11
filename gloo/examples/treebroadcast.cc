@@ -8,7 +8,6 @@
 #include <gloo/allreduce.h>
 
 #include <gloo/barrier.h>
-#include "gloo/mpi/context.h"
 #include "gloo/transport/tcp/device.h"
 #include "gloo/rendezvous/context.h"
 #include "gloo/rendezvous/file_store.h"
