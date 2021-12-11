@@ -119,7 +119,7 @@ void runBcast(int rank, int size) {
         logn >>= 1;
     }
 
-
+    MPI_Barrier();
 }
 
 void run2(int rank) {
