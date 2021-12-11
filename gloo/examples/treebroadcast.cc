@@ -145,9 +145,9 @@ void run2(int rank) {
     }
 }
 
-void init(int rank, int size, std::string prefix) {
+void init(int rank, int size, std::string prefix, std::string network) {
     gloo::transport::tcp::attr attr;
-    attr.iface = "enp6s0f0";
+    attr.iface = network;
 //    attr.iface = "lo";
     attr.ai_family = AF_UNSPEC;
 
@@ -172,18 +172,20 @@ void init(int rank, int size, std::string prefix) {
 int main(int argc, char* argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
-        getenv("RANK") == nullptr) {
+        getenv("RANK") == nullptr ||
+        getenv("NETWORK") == nullptr) {
         std::cerr
-                << "Please set environment variables PREFIX, SIZE, and RANK."
+                << "Please set environment variables PREFIX, SIZE, RANK and NETWORK"
                 << std::endl;
         return 1;
     }
     std::string prefix = getenv("PREFIX");
     int rank = atoi(getenv("RANK"));
     int size = atoi(getenv("SIZE"));
+    std::string network = getenv("NETWORK");
 
     std::cout << "Running init" << "\n";
-    init(rank, size, prefix);
+    init(rank, size, prefix, network);
     std::cout << "Running bcast" << "\n";
     runBcast(rank, size);
     return 0;
