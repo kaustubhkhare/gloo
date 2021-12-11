@@ -42,6 +42,11 @@ int MPI_Send(
     ubuf->waitSend();
 }
 
+int MPI_Barrier() {
+    gloo::BarrierOptions opts(k_context);
+    gloo::barrier(opts);
+}
+
 void run(int rank, int size) {
 
     if (rank == 0) {
@@ -85,7 +90,7 @@ void run(int rank, int size) {
         }
     }
 
-//    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier();
 }
 
 void runBcast(int rank, int size) {
@@ -113,6 +118,8 @@ void runBcast(int rank, int size) {
         }
         logn >>= 1;
     }
+
+
 }
 
 void run2(int rank) {
