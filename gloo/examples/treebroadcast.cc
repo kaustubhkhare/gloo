@@ -154,7 +154,7 @@ void init(int rank, int size, std::string prefix, std::string network) {
 //    std::cout << "Creating device " << "\n";
     auto dev = gloo::transport::tcp::CreateDevice(attr);
 //    std::cout << "Creating fileStore " << "\n";
-    auto fileStore = gloo::rendezvous::FileStore("/proj/uwmadison744-f21-PG0/rendezvous_checkpoint");
+    auto fileStore = gloo::rendezvous::FileStore("/proj/UWMadison744-F21/groups/akc/rendezvous_checkpoint/");
 //    std::cout << "Creating prefixStore " << "\n";
     auto prefixStore = gloo::rendezvous::PrefixStore(prefix, fileStore);
 //    std::cout << "Creating context " << "\n";
