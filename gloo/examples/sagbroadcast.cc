@@ -56,59 +56,12 @@ int MPI_SendRecv(
         int tag,
         MPI_Comm comm)
 {
-    // Argument is logically const if we're only sending.
     auto usendbuf = k_context->createUnboundBuffer(const_cast<void*>(sendbuf), send_bytes);
     auto urecvbuf = k_context->createUnboundBuffer(const_cast<void*>(recvbuf), recv_bytes);
     usendbuf->send(dest, tag);
     urecvbuf->recv(src, tag);
     usendbuf->waitSend();
     urecvbuf->waitRecv();
-}
-
-void run(int rank, int size) {
-
-    if (rank == 0) {
-        int dst = 1;
-        int a[] = {1, 1, 2, 2, 3, 3, 4, 4};
-        int tag = 1234;
-        MPI_Send(a, sizeof(a), dst, tag, MPI_COMM_WORLD);
-        dst = 2;
-        MPI_Send(a, sizeof(a), dst, tag, MPI_COMM_WORLD);
-//        for (int dst = 1; dst < size; dst++) {
-//            int a[] = {dst, 1, 2, 2, 3, 3, 4, 4};
-//            int tag = 1234;
-//            MPI_Send(a, sizeof(a), dst, tag, MPI_COMM_WORLD);
-//        }
-    } else {
-        int src = 0;
-        if (rank % 2 == 0) {
-            src = (rank - 2) / 2;
-        } else {
-            src = (rank - 1) / 2;
-        }
-        int tag = 1234;
-        int a[8];
-        MPI_Recv(a, sizeof(a), src, tag, MPI_COMM_WORLD);
-        gethostname(hostname, HOST_NAME_MAX);
-        std::cout << "Received from rank " << src << " to " << rank << " on " << hostname << std::endl;
-        std::cout << "\t";
-        for (int i = 0; i < sizeof(a) / sizeof(*a); i++) {
-            std::cout << a[i] << " ";
-        }
-        std::cout << std::endl;
-        int dst1 = 2 * rank + 1;
-        int dst2 = 2 * rank + 2;
-        if (dst1 < size) {
-            std::cout << "Sending from " << rank << " to " << dst1 << std::endl;
-            MPI_Send(a, sizeof(a), dst1, tag, MPI_COMM_WORLD);
-        }
-        if (dst2 < size) {
-            std::cout << "Sending from " << rank << " to " << dst2 << std::endl;
-            MPI_Send(a, sizeof(a), dst2, tag, MPI_COMM_WORLD);
-        }
-    }
-
-//    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void runBcast(int rank, int size) {
@@ -152,29 +105,6 @@ void runBcast(int rank, int size) {
         if (--rp == -1) rp = n-1;
     }
 
-}
-
-void run2(int rank) {
-    int a[8];
-    gethostname(hostname, HOST_NAME_MAX);
-    std::cout << "running " << rank << " @ " << hostname << "\n";
-    bzero(a, sizeof(a));
-    std::cout << " assigned zeros " << std::endl;
-    if (rank == 0) {
-        std::cout << " sending from 0 " << std::endl;
-        a[2] = 123;
-        MPI_Send(a, sizeof(a), 1, 100, MPI_COMM_WORLD);
-        std::cout << " sent " << std::endl;
-    } else {
-        std::cout << " receiving at 1 " << std::endl;
-        MPI_Recv(a, sizeof(a), 0, 100, MPI_COMM_WORLD);
-        std::cout << " received " << std::endl;
-        std::cout << "\t";
-        for (int i = 0; i < sizeof(a) / sizeof(*a); i++) {
-            std::cout << a[i] << " ";
-        }
-        std::cout << std::endl;
-    }
 }
 
 void init(int rank, int size, std::string prefix) {
