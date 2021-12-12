@@ -214,6 +214,32 @@ void init(int rank, int size, std::string prefix, std::string network) {
     std::cout << "rank=" << rank << "size=" << size << std::endl;
 }
 
+double runGather(const int rank , int size, double input) {
+    double sendBuffer[] = {input};
+    double recvBuffer[1];
+    const int tag = 564;
+    std::vector<double> allTimes;
+
+    if (rank == 0){
+        for (int all = 1; all < size; all++) {
+//            std::cout << "Process waiting at " << rank << " for " << all << "\n";
+            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
+            allTimes.push_back(recvBuffer[0]);
+        }
+    } else {
+//        std::cout << "Sending from " << rank << " to root" << "\n";
+        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
+//        std::cout << "\tSent" << "\n";
+    }
+
+    if (rank == 0) {
+        auto it  = std::max_element(std::begin(allTimes), std::end(allTimes));
+        return *it;
+    } else{
+        return 0;
+    }
+}
+
 int main(int argc, char* argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
@@ -245,7 +271,41 @@ int main(int argc, char* argv[]) {
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
-    runBcast(rank, size, vsize);
+
+    for (int i = 0; i < 10; i++) {
+        runBcast(rank, size, vsize);
+    }
+
+    std::vector<double> all_stat;
+    for (int i = 0; i < iterations; i++) {
+        MPI_Barrier(MPI_COMM_WORLD);
+        const auto start = std::chrono::high_resolution_clock::now();
+        runBcast(rank, size, vsize);
+        const auto end = std::chrono::high_resolution_clock::now();
+        const std::chrono::duration<double> ets = end - start;
+        const double elapsed_ts = ets.count();
+        MPI_Barrier(MPI_COMM_WORLD);
+        double maxTime = runGather(rank, size, elapsed_ts);
+        if (rank == 0) {
+//            std::cout << "max timing for " << i << " is " << maxTime << std::endl;
+            all_stat.push_back(maxTime);
+        }
+    }
+
+    double sum = std::accumulate(all_stat.begin(), all_stat.end(), 0.0);
+    std::sort(all_stat.begin(), all_stat.end());
+    double median = all_stat[all_stat.size()/2];
+    double avg = sum / iterations;
+    std::cout << "median is " << median << "\n";
+    std::cout << "average is " << avg << std::endl;
+
+    if (rank == 0) {
+        std::cout << "stats: ";
+        for (auto ts: all_stat) std::cout << ts << " ";
+        std::cout << "\n";
+    }
+
+
     std::cout << "Done" << "\n";
     return 0;
 }
