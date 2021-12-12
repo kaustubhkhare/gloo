@@ -42,6 +42,16 @@ int MPI_Send(
     ubuf->waitSend();
 }
 
+auto MPI_ISend(
+        const void *cbuf,
+        ssize_t bytes,
+        int dest,
+        int tag) {
+    auto ubuf = k_context->createUnboundBuffer(const_cast<void*>(cbuf), bytes);
+    ubuf->send(dest, tag);
+    return ubuf;
+}
+
 int MPI_SendRecv(
         const void *sendbuf,
         const void *recvbuf,
@@ -61,38 +71,84 @@ int MPI_SendRecv(
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[] = {444, 111, 222, 333};;
+//    int buffer[] = {444, 111, 222, 333};;
     int tag = 5643;
     int val;
 
     // Scatter
+//    if (rank == 0) {
+//        for (int i = 1; i < size; i++) {
+//            std::cout << "Sending " << buffer[i] << " from 0 to " << i << "\n";
+//            val = buffer[i];
+//            MPI_Send(&val, sizeof(val), i, tag);
+//            std::cout << "\tSend" << "\n";
+//        }
+//    } else {
+//        std::cout << "Process waiting at " << rank << " for 0" << "\n";
+//        MPI_Recv(&val, sizeof(val), 0, tag);
+//        std::cout << "\tReceived " << val << " at " << rank << "\n";
+//        buffer[rank] = val;
+//    }
+
+
+    int recvbuf[] = {0, 0, 0, 0};
+    int sendbuf[] = {444, 111, 222, 333};
+    int w;
+    int n = size;
+    int count = size;
+
     if (rank == 0) {
-        for (int i = 1; i < size; i++) {
-            std::cout << "Sending " << buffer[i] << " from 0 to " << i << "\n";
-            val = buffer[i];
-            MPI_Send(&val, sizeof(val), i, tag);
-            std::cout << "\tSend" << "\n";
-        }
+        if (__builtin_popcount(n) > 1)
+            w = (1 << (32-__builtin_clz(n)));
+        else w = n;
+    } else
+        w = (1 << __builtin_ctz(rank));
+    if (rank != 0) {
+//        if (rank & 1) sendbuf = recvbuf; // directly copy to leaf nodes
+//        else if (n*count > glob_buf_sz) {
+//            glob_buf = sendbuf = realloc(sendbuf, n*count*sizeof(int));
+//            glob_buf_sz = n*count;
+//        }
+//        else sendbuf = glob_buf;
+        MPI_Recv(recvbuf, sizeof(int) * (count * w), rank ^ w, tag);
+//        MPI_Recv(sendbuf, count * w, MPI_INT, rank ^ w, 1, comm, MPI_STATUS_IGNORE);
     } else {
-        std::cout << "Process waiting at " << rank << " for 0" << "\n";
-        MPI_Recv(&val, sizeof(val), 0, tag);
-        std::cout << "\tReceived " << val << " at " << rank << "\n";
-        buffer[rank] = val;
     }
+
+    int k = 0;
+    const int cn = count * n;
+    static std::vector<> pending_req;
+    pending_req.clear();
+    while (w > 0) {
+        const int partner = rank | w;
+        if (partner > rank && partner < n) {
+            const int wc = w * count;
+            const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
+            pending_req.push_back(MPI_Isend(sendbuf + w * count, bytes * sizeof(int), partner, tag));
+        }
+        w >>= 1;
+    }
+
+    for (auto& i: pending_req) i->waitSend();
+
+
+
+
+
 
     // Ring All gather
     int n = size;
     const int partner = (rank + 1) % n;
     const int partnerp = (rank - 1 + n) % n;
     int ri = rank, rp = rank - 1;
-    int count = 1;
+    int count = size / size;
     if (rp < 0) rp = n - 1;
     for (int i = 0; i < n - 1; ++i) {
         std::cout << "Sending buffer[" <<  ri * count << "] = " << buffer[ri * count]
         << " from " << rank << " to " << partner << " and receiving from "
         << partnerp << " in buffer[" << rp * count << "]\n";
         MPI_SendRecv(buffer + ri * count, buffer + rp * count,
-                     sizeof(buffer[ri * count]), sizeof(buffer[rp * count]),
+                     sizeof(buffer[ri * count]) * count, sizeof(buffer[rp * count] * count),
                      partner, partnerp, tag);
         std::cout << "\tSent=" + buffer[ri * count] << " Received=" << buffer[rp * count]
         << "\n";
