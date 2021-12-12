@@ -222,6 +222,14 @@ int main(int argc, char* argv[]) {
         getenv("VSIZE") == nullptr) {
         if (getenv("VSIZE") == nullptr)
             std::cerr << "Please set VSIZE" << std::endl;
+        else if (getenv("NETWORK") == nullptr)
+            std::cerr << "Please set NETWORK" << std::endl;
+        else if (getenv("RANK") == nullptr)
+            std::cerr << "Please set RANK" << std::endl;
+        else if (getenv("SIZE") == nullptr)
+            std::cerr << "Please set SIZE" << std::endl;
+        else if (getenv("PREFIX") == nullptr)
+            std::cerr << "Please set PREFIX" << std::endl;
         std::cerr
                 << "Please set environment variables PREFIX, SIZE, RANK NETWORK and VSIZE"
                 << std::endl;
