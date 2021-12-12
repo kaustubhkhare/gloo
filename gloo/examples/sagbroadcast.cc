@@ -75,27 +75,11 @@ void runBcast(int rank, int size) {
     int tag = 5643;
     int val;
 
-    // Scatter
-//    if (rank == 0) {
-//        for (int i = 1; i < size; i++) {
-//            std::cout << "Sending " << buffer[i] << " from 0 to " << i << "\n";
-//            val = buffer[i];
-//            MPI_Send(&val, sizeof(val), i, tag);
-//            std::cout << "\tSend" << "\n";
-//        }
-//    } else {
-//        std::cout << "Process waiting at " << rank << " for 0" << "\n";
-//        MPI_Recv(&val, sizeof(val), 0, tag);
-//        std::cout << "\tReceived " << val << " at " << rank << "\n";
-//        buffer[rank] = val;
-//    }
-
-
     std::cout << "Running scatter on " << rank << "\n";
     int arrSize = 16;
-    int recvbuf[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3],  buffer[4],  buffer[5],  buffer[6],  buffer[7],
-                     buffer[8], buffer[9], buffer[10], buffer[11],  buffer[12],  buffer[13],  buffer[14],  buffer[15]};
+    int recvbuf[arrSize];
+    int sendbuf[arrSize];
+
     int w;
     int n = size;
     int count = arrSize / 4;
