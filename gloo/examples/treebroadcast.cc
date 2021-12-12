@@ -93,9 +93,9 @@ void run(int rank, int size) {
     MPI_Barrier();
 }
 
-void runBcast(int rank, int size) {
+void runBcast(int rank, int size, int vsize) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    int buffer[vsize];
     int tag = 5643;
 
     int logn = 1  << ( __builtin_ctz(rank));
@@ -103,18 +103,22 @@ void runBcast(int rank, int size) {
     logn >>= 1;
 
     if (rank != 0) {
-        const int partner = rank ^ (1 << __builtin_ctz(rank));
-        std::cout << "Waiting at " << rank << " for " << partner << "\n";
+        const int partner = rank ^ (1 << __builtin_ctz(rank));\
+        if (debug)
+            std::cout << "Waiting at " << rank << " for " << partner << "\n";
         MPI_Recv(buffer, sizeof(buffer), partner, tag);
-        std::cout << "\tReceived" << sizeof(buffer) << "\n";
+        if (debug)
+            std::cout << "\tReceived" << sizeof(buffer) << "\n";
     }
 
     while (logn > 0) {
         const int partner = rank | logn;
         if (partner > rank && partner < size) {
-            std::cout << "Sending from " << rank << " to " << partner << "\n";
+            if (debug)
+                std::cout << "Sending from " << rank << " to " << partner << "\n";
             MPI_Send(buffer, sizeof(buffer), partner, tag);
-            std::cout << "\tSent" << "\n";
+            if (debug)
+                std::cout << "\tSent" << "\n";
         }
         logn >>= 1;
     }
@@ -173,20 +177,23 @@ int main(int argc, char* argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
         getenv("RANK") == nullptr ||
-        getenv("NETWORK") == nullptr) {
+        getenv("NETWORK") == nullptr ||
+        getenv("VSIZE")) {
         std::cerr
-                << "Please set environment variables PREFIX, SIZE, RANK and NETWORK"
+                << "Please set environment variables PREFIX, SIZE, RANK NETWORK and VSIZE"
                 << std::endl;
         return 1;
     }
     std::string prefix = getenv("PREFIX");
     int rank = atoi(getenv("RANK"));
     int size = atoi(getenv("SIZE"));
+    int vsize = atoi(getenv("VSIZE"));
     std::string network = getenv("NETWORK");
 
-    std::cout << "Running init" << "\n";
+//    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
-    std::cout << "Running bcast" << "\n";
-    runBcast(rank, size);
+//    std::cout << "Running bcast" << "\n";
+    runBcast(rank, size, vsize);
+    std::cout << "Done" << "\n";
     return 0;
 }

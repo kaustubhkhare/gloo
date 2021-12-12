@@ -69,14 +69,15 @@ int MPI_SendRecv(
     urecvbuf->waitRecv();
 }
 
-void runBcast(int rank, int size) {
-    std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[] = {888, 111, 222, 333, 444, 555, 666, 777, 999, 110, 111, 112, 113, 114, 115, 116};;
+void runBcast(int rank, int size, int arrSize) {
+    int debug = 0;
+    if (debug)
+        std::cout << "Bcast " << rank << " " << size << "\n";
     int tag = 5643;
     int val;
 
-    std::cout << "Running scatter on " << rank << "\n";
-    int arrSize = 16;
+    if (debug)
+        std::cout << "Running scatter on " << rank << "\n";
     int recvbuf[arrSize];
     int sendbuf[arrSize];
 
@@ -91,14 +92,17 @@ void runBcast(int rank, int size) {
     } else
         w = (1 << __builtin_ctz(rank)); // count trailing number of 0s in binary representation
     if (rank != 0) {
-        std::cout << "\tWaiting to receive from " << (rank ^ w) << "\n";
+        if (debug)
+            std::cout << "\tWaiting to receive from " << (rank ^ w) << "\n";
         MPI_Recv(recvbuf + (rank * arrSize / size), sizeof(int) * (count * w), rank ^ w, tag);
-        std::cout << "\tReceived ";
-        for (int i = 0; i < count * w; i++) {
-            std::cout << recvbuf[i + (rank * arrSize / size)] << " ";
+
+        if (debug) {
+            std::cout << "\tReceived ";
+            for (int i = 0; i < count * w; i++) {
+                std::cout << recvbuf[i + (rank * arrSize / size)] << " ";
+            }
+            std::cout << "\n";
         }
-        std::cout << "\n";
-//        MPI_Recv(sendbuf, count * w, MPI_INT, rank ^ w, 1, comm, MPI_STATUS_IGNORE);
     } else {
     }
 
@@ -108,13 +112,17 @@ void runBcast(int rank, int size) {
     pending_req.clear();
     while (w > 0) {
         const int partner = rank | w;
-        std::cout << "w=" << w << "\n";
+        if (debug)
+            std::cout << "w=" << w << "\n";
         if (partner > rank && partner < n) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
-            for (int i = 0; i < bytes; i++) {
-                std::cout << "\tSending new sendbuf[" << ((partner * arrSize) / size + i) << "]" <<  sendbuf[(partner * arrSize) / size + i] << " to " << partner << " w=" << w
-                << " count=" << count << " bytes=" << bytes << "\n";
+            if (debug) {
+                for (int i = 0; i < bytes; i++) {
+                    std::cout << "\tSending new sendbuf[" << ((partner * arrSize) / size + i) << "]"
+                              << sendbuf[(partner * arrSize) / size + i] << " to " << partner << " w=" << w
+                              << " count=" << count << " bytes=" << bytes << "\n";
+                }
             }
             pending_req.push_back(std::move(MPI_ISend(sendbuf + partner * arrSize / size, bytes * sizeof(int), partner, tag)));
         }
@@ -123,14 +131,14 @@ void runBcast(int rank, int size) {
 
     for (auto& i: pending_req) i->waitSend();
 
-    std::cout << "Received Array: ";
-    for (int i = 0; i < cn; i++) {
-        std::cout << recvbuf[i] << " ";
+    if (debug) {
+        std::cout << "Received Array: ";
+        for (int i = 0; i < cn; i++) {
+            std::cout << recvbuf[i] << " ";
+        }
+        std::cout << "\n";
+        std::cout << "Running gather on " << rank << "\n";
     }
-    std::cout << "\n";
-
-
-    std::cout << "Running gather on " << rank << "\n";
 
     // Ring All gather
     const int partner = (rank + 1) % n;
@@ -140,28 +148,38 @@ void runBcast(int rank, int size) {
     for (int i = 0; i < n - 1; ++i) {
 
         if (rank == 0) {
-            for (int j = 0; j < count; j++) {
-                std::cout << "\tSending buffer[" << (ri * count + j)<< "] = " << sendbuf[(ri * count + j)]
-                          << " from " << rank << " to " << partner << " and receiving from "
-                          << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+            if (debug) {
+                for (int j = 0; j < count; j++) {
+                    std::cout << "\tSending buffer[" << (ri * count + j) << "] = " << sendbuf[(ri * count + j)]
+                              << " from " << rank << " to " << partner << " and receiving from "
+                              << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+                }
             }
             MPI_SendRecv(sendbuf + ri * count, sendbuf + rp * count,
                          sizeof(sendbuf[ri * count]) * count, sizeof(sendbuf[rp * count]) * count,
                          partner, partnerp, tag);
-            for (int j = 0; j < count; j++) {
-                std::cout << "\tSent=" << sendbuf[ri * count + j] << " Received=" << sendbuf[rp * count + j] << "\n";
+            if (debug) {
+                for (int j = 0; j < count; j++) {
+                    std::cout << "\tSent=" << sendbuf[ri * count + j] << " Received=" << sendbuf[rp * count + j]
+                              << "\n";
+                }
             }
         } else {
-            for (int j = 0; j < count; j++) {
-                std::cout << "\tSending buffer[" << (ri * count + j)<< "] = " << recvbuf[(ri * count + j)]
-                          << " from " << rank << " to " << partner << " and receiving from "
-                          << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+            if (debug) {
+                for (int j = 0; j < count; j++) {
+                    std::cout << "\tSending buffer[" << (ri * count + j) << "] = " << recvbuf[(ri * count + j)]
+                              << " from " << rank << " to " << partner << " and receiving from "
+                              << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+                }
             }
             MPI_SendRecv(recvbuf + ri * count, recvbuf + rp * count,
                          sizeof(recvbuf[ri * count]) * count, sizeof(recvbuf[rp * count]) * count,
                          partner, partnerp, tag);
-            for (int j = 0; j < count; j++) {
-                std::cout << "\tSent=" << recvbuf[ri * count + j] << " Received=" << recvbuf[rp * count + j] << "\n";
+            if (debug) {
+                for (int j = 0; j < count; j++) {
+                    std::cout << "\tSent=" << recvbuf[ri * count + j] << " Received=" << recvbuf[rp * count + j]
+                              << "\n";
+                }
             }
         }
 
@@ -200,20 +218,22 @@ int main(int argc, char* argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
         getenv("RANK") == nullptr ||
-        getenv("NETWORK") == nullptr) {
+            getenv("VSIZE")) {
         std::cerr
-                << "Please set environment variables PREFIX, SIZE, RANK and NETWORK"
+                << "Please set environment variables PREFIX, SIZE, RANK NETWORK and VSIZE"
                 << std::endl;
         return 1;
     }
     std::string prefix = getenv("PREFIX");
     int rank = atoi(getenv("RANK"));
     int size = atoi(getenv("SIZE"));
+    int vsize = atoi(getenv("VSIZE"));
     std::string network = getenv("NETWORK");
 
-    std::cout << "Running init" << "\n";
+//    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
-    std::cout << "Running bcast" << "\n";
-    runBcast(rank, size);
+//    std::cout << "Running bcast" << "\n";
+    runBcast(rank, size, vsize);
+    std::cout << "Done" << "\n";
     return 0;
 }
