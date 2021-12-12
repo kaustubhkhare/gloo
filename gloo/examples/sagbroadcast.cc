@@ -71,7 +71,7 @@ int MPI_SendRecv(
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[] = {888, 111, 222, 333, 444, 555, 666, 777};;
+    int buffer[] = {888, 111, 222, 333, 444, 555, 666, 777, 999, 110, 111, 112, 113, 114, 115, 116};;
     int tag = 5643;
     int val;
 
@@ -92,11 +92,13 @@ void runBcast(int rank, int size) {
 
 
     std::cout << "Running scatter on " << rank << "\n";
-    int recvbuf[] = {0, 0, 0, 0, 0, 0, 0};
-    int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3],  buffer[4],  buffer[5],  buffer[6],  buffer[7]};
+    int arrSize = 16;
+    int recvbuf[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3],  buffer[4],  buffer[5],  buffer[6],  buffer[7],
+                     buffer[8], buffer[9], buffer[10], buffer[11],  buffer[12],  buffer[13],  buffer[14],  buffer[15]};
     int w;
     int n = size;
-    int count = 8 / 4;
+    int count = arrSize / 4;
 
     if (rank == 0) {
         if (__builtin_popcount(n) > 1) // count number of 1s set in the binary representation
@@ -127,10 +129,10 @@ void runBcast(int rank, int size) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
             for (int i = 0; i < bytes; i++) {
-                std::cout << "\tSending new sendbuf[" << ((partner * 8) / size + i) << "]" <<  sendbuf[(partner * 8) / size + i] << " to " << partner << " w=" << w
+                std::cout << "\tSending new sendbuf[" << ((partner * arrSize) / size + i) << "]" <<  sendbuf[(partner * arrSize) / size + i] << " to " << partner << " w=" << w
                 << " count=" << count << " bytes=" << bytes << "\n";
             }
-            pending_req.push_back(std::move(MPI_ISend(sendbuf + partner * 8 / size, bytes * sizeof(int), partner, tag)));
+            pending_req.push_back(std::move(MPI_ISend(sendbuf + partner * arrSize / size, bytes * sizeof(int), partner, tag)));
         }
         w >>= 1;
     }
