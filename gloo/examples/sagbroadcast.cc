@@ -139,7 +139,11 @@ void runBcast(int rank, int size) {
 
     for (auto& i: pending_req) i->waitSend();
 
-
+    std::cout << "Received Array: ";
+    for (int i = 0; i < cn; i++) {
+        std::cout << recvbuf[i] << " ";
+    }
+    std::cout << "\n";
 
 
     std::cout << "Running gather on " << rank << "\n";
