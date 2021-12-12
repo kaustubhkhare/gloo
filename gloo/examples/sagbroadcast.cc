@@ -122,6 +122,7 @@ void runBcast(int rank, int size) {
     pending_req.clear();
     while (w > 0) {
         const int partner = rank | w;
+        std::cout << "w=" << w << "\n";
         if (partner > rank && partner < n) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
