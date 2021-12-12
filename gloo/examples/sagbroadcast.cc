@@ -111,7 +111,7 @@ void runBcast(int rank, int size) {
 //            glob_buf_sz = n*count;
 //        }
 //        else sendbuf = glob_buf;
-        std::cout << "\tWaiting to receive from " << rank ^ w << "\n";
+        std::cout << "\tWaiting to receive from " << (rank ^ w) << "\n";
         MPI_Recv(recvbuf, sizeof(int) * (count * w), rank ^ w, tag);
         std::cout << "\tReceived ";
         for (int i = 0; i < count * w; i++) {
