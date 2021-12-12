@@ -96,7 +96,7 @@ void runBcast(int rank, int size) {
     int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3]};
     int w;
     int n = size;
-    int count = size;
+    int count = 1;
 
     if (rank == 0) {
         if (__builtin_popcount(n) > 1)
