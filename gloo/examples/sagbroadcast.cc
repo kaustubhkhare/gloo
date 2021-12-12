@@ -105,12 +105,6 @@ void runBcast(int rank, int size) {
     } else
         w = (1 << __builtin_ctz(rank));
     if (rank != 0) {
-//        if (rank & 1) sendbuf = recvbuf; // directly copy to leaf nodes
-//        else if (n*count > glob_buf_sz) {
-//            glob_buf = sendbuf = realloc(sendbuf, n*count*sizeof(int));
-//            glob_buf_sz = n*count;
-//        }
-//        else sendbuf = glob_buf;
         std::cout << "\tWaiting to receive from " << (rank ^ w) << "\n";
         MPI_Recv(recvbuf, sizeof(int) * (count * w), rank ^ w, tag);
         std::cout << "\tReceived ";
@@ -131,7 +125,9 @@ void runBcast(int rank, int size) {
         if (partner > rank && partner < n) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
-            std::cout << "\tSending " <<  sendbuf[w * count] << " to " << partner << "\n";
+            for (int i = 0; i < bytes; i++) {
+                std::cout << "\tSending " <<  sendbuf[w * count + i] << " to " << partner << "\n";
+            }
             pending_req.push_back(std::move(MPI_ISend(sendbuf + w * count, bytes * sizeof(int), partner, tag)));
         }
         w >>= 1;
