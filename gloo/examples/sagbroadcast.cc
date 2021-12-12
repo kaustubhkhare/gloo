@@ -129,10 +129,10 @@ void runBcast(int rank, int size) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
             for (int i = 0; i < bytes; i++) {
-                std::cout << "\tSending new sendbuf[" << ((partner * arrSize) / size + i) << "]" <<  sendbuf[(partner * arrSize) / size + i] << " to " << partner << " w=" << w
+                std::cout << "\tSending new sendbuf[" << ((partner * arrSize) / size + i) << "]" <<  recvbuf[(partner * arrSize) / size + i] << " to " << partner << " w=" << w
                 << " count=" << count << " bytes=" << bytes << "\n";
             }
-            pending_req.push_back(std::move(MPI_ISend(sendbuf + partner * arrSize / size, bytes * sizeof(int), partner, tag)));
+            pending_req.push_back(std::move(MPI_ISend(recvbuf + partner * arrSize / size, bytes * sizeof(int), partner, tag)));
         }
         w >>= 1;
     }
