@@ -117,7 +117,7 @@ void runBcast(int rank, int size) {
 
     int k = 0;
     const int cn = count * n;
-    static std::vector<std::unique_ptr<transport::UnboundBuffer>> pending_req;
+    static std::vector<std::unique_ptr<transport::UnboundBuffer> pending_req;
     pending_req.clear();
     while (w > 0) {
         const int partner = rank | w;
