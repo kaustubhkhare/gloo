@@ -49,7 +49,7 @@ auto MPI_ISend(
         int tag) {
     auto ubuf = k_context->createUnboundBuffer(const_cast<void*>(cbuf), bytes);
     ubuf->send(dest, tag);
-    return ubuf;
+    return std::move(ubuf);
 }
 
 int MPI_SendRecv(
@@ -71,7 +71,7 @@ int MPI_SendRecv(
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-//    int buffer[] = {444, 111, 222, 333};;
+    int buffer[] = {444, 111, 222, 333};;
     int tag = 5643;
     int val;
 
@@ -92,7 +92,7 @@ void runBcast(int rank, int size) {
 
 
     int recvbuf[] = {0, 0, 0, 0};
-    int sendbuf[] = {444, 111, 222, 333};
+    int sendbuf[] = buffer;
     int w;
     int n = size;
     int count = size;
@@ -117,14 +117,14 @@ void runBcast(int rank, int size) {
 
     int k = 0;
     const int cn = count * n;
-    static std::vector<> pending_req;
+    static std::vector<std::unique_ptr<transport::UnboundBuffer>> pending_req;
     pending_req.clear();
     while (w > 0) {
         const int partner = rank | w;
         if (partner > rank && partner < n) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
-            pending_req.push_back(MPI_Isend(sendbuf + w * count, bytes * sizeof(int), partner, tag));
+            pending_req.push_back(std::move(MPI_ISend(sendbuf + w * count, bytes * sizeof(int), partner, tag)));
         }
         w >>= 1;
     }
@@ -137,7 +137,7 @@ void runBcast(int rank, int size) {
 
 
     // Ring All gather
-    int n = size;
+    n = size;
     const int partner = (rank + 1) % n;
     const int partnerp = (rank - 1 + n) % n;
     int ri = rank, rp = rank - 1;
