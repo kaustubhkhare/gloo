@@ -92,7 +92,7 @@ void runBcast(int rank, int size) {
 
 
     int recvbuf[] = {0, 0, 0, 0};
-    int sendbuf[] = buffer;
+    int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3]};
     int w;
     int n = size;
     int count = size;
