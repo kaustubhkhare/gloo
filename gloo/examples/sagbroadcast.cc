@@ -91,6 +91,7 @@ void runBcast(int rank, int size) {
 //    }
 
 
+    std::cout << "Running scatter on " << rank << "\n";
     int recvbuf[] = {0, 0, 0, 0};
     int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3]};
     int w;
@@ -110,7 +111,13 @@ void runBcast(int rank, int size) {
 //            glob_buf_sz = n*count;
 //        }
 //        else sendbuf = glob_buf;
+        std::cout << "\tWaiting to receive from " << rank ^ w << "\n";
         MPI_Recv(recvbuf, sizeof(int) * (count * w), rank ^ w, tag);
+        std::cout << "\tReceived ";
+        for (int i = 0; i < count * w; i++) {
+            std::cout << recvbuf[i] << " ";
+        }
+        std::cout << "\n";
 //        MPI_Recv(sendbuf, count * w, MPI_INT, rank ^ w, 1, comm, MPI_STATUS_IGNORE);
     } else {
     }
@@ -124,6 +131,7 @@ void runBcast(int rank, int size) {
         if (partner > rank && partner < n) {
             const int wc = w * count;
             const int bytes = ((wc << 1) >= cn) ? (cn - wc): wc;
+            std::cout << "\tSending " <<  sendbuf[w * count] << " to " << partner << "\n";
             pending_req.push_back(std::move(MPI_ISend(sendbuf + w * count, bytes * sizeof(int), partner, tag)));
         }
         w >>= 1;
@@ -134,7 +142,7 @@ void runBcast(int rank, int size) {
 
 
 
-
+    std::cout << "Running gather on " << rank << "\n";
 
     // Ring All gather
     n = size;
@@ -144,7 +152,7 @@ void runBcast(int rank, int size) {
     count = size / size;
     if (rp < 0) rp = n - 1;
     for (int i = 0; i < n - 1; ++i) {
-        std::cout << "Sending buffer[" <<  ri * count << "] = " << buffer[ri * count]
+        std::cout << "\tSending buffer[" <<  ri * count << "] = " << buffer[ri * count]
         << " from " << rank << " to " << partner << " and receiving from "
         << partnerp << " in buffer[" << rp * count << "]\n";
         MPI_SendRecv(buffer + ri * count, buffer + rp * count,
