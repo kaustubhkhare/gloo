@@ -71,7 +71,7 @@ int MPI_SendRecv(
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[] = {444, 111, 222, 333};;
+    int buffer[] = {888, 111, 222, 333, 444, 555, 666, 777};;
     int tag = 5643;
     int val;
 
@@ -92,11 +92,11 @@ void runBcast(int rank, int size) {
 
 
     std::cout << "Running scatter on " << rank << "\n";
-    int recvbuf[] = {0, 0, 0, 0};
-    int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3]};
+    int recvbuf[] = {0, 0, 0, 0, 0, 0, 0};
+    int sendbuf[] = {buffer[0], buffer[1], buffer[2], buffer[3],  buffer[4],  buffer[5],  buffer[6],  buffer[7]};
     int w;
     int n = size;
-    int count = 1;
+    int count = 8 / 4;
 
     if (rank == 0) {
         if (__builtin_popcount(n) > 1)
@@ -141,11 +141,9 @@ void runBcast(int rank, int size) {
     std::cout << "Running gather on " << rank << "\n";
 
     // Ring All gather
-    n = size;
     const int partner = (rank + 1) % n;
     const int partnerp = (rank - 1 + n) % n;
     int ri = rank, rp = rank - 1;
-    count = size / size;
     if (rp < 0) rp = n - 1;
     for (int i = 0; i < n - 1; ++i) {
         std::cout << "\tSending buffer[" <<  ri * count << "] = " << buffer[ri * count]
