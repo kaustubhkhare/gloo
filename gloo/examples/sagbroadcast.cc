@@ -99,11 +99,11 @@ void runBcast(int rank, int size) {
     int count = 8 / 4;
 
     if (rank == 0) {
-        if (__builtin_popcount(n) > 1)
+        if (__builtin_popcount(n) > 1) // count number of 1s set in the binary representation
             w = (1 << (32-__builtin_clz(n)));
         else w = n;
     } else
-        w = (1 << __builtin_ctz(rank));
+        w = (1 << __builtin_ctz(rank)); // count trailing number of 0s in binary representation
     if (rank != 0) {
         std::cout << "\tWaiting to receive from " << (rank ^ w) << "\n";
         MPI_Recv(recvbuf, sizeof(int) * (count * w), rank ^ w, tag);
@@ -130,7 +130,7 @@ void runBcast(int rank, int size) {
                 std::cout << "\tSending sendbuf[" << (w * count + i) << "]" <<  sendbuf[w * count + i] << " to " << partner << " w=" << w
                 << " count=" << count << " bytes=" << bytes << "\n";
             }
-            pending_req.push_back(std::move(MPI_ISend(sendbuf + w * count, bytes * sizeof(int), partner, tag)));
+            pending_req.push_back(std::move(MPI_ISend(sendbuf + partner * 8 / size, bytes * sizeof(int), partner, tag)));
         }
         w >>= 1;
     }
