@@ -218,6 +218,7 @@ int main(int argc, char* argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
         getenv("RANK") == nullptr ||
+        getenv("NETWORK") == nullptr ||
         getenv("VSIZE") == nullptr) {
         std::cerr
                 << "Please set environment variables PREFIX, SIZE, RANK NETWORK and VSIZE"
