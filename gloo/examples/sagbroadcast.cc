@@ -159,7 +159,7 @@ void runBcast(int rank, int size) {
                      sizeof(buffer[ri * count]) * count, sizeof(buffer[rp * count]) * count,
                      partner, partnerp, tag);
         for (int j = 0; j < count; j++) {
-            std::cout << "\tSent=" + buffer[ri * count + j] << " Received=" << buffer[rp * count + j] << "\n";
+            std::cout << "\tSent=" << buffer[ri * count + j] << " Received=" << buffer[rp * count + j] << "\n";
         }
 
         if (--ri == -1) ri = n-1;
