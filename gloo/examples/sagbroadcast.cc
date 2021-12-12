@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <numeric>
 #include <memory>
 #include <string>
 #include "gloo/allreduce_ring.h"
