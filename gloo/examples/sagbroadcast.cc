@@ -150,14 +150,18 @@ void runBcast(int rank, int size) {
     int ri = rank, rp = rank - 1;
     if (rp < 0) rp = n - 1;
     for (int i = 0; i < n - 1; ++i) {
-        std::cout << "\tSending buffer[" <<  ri * count << "] = " << buffer[ri * count]
-        << " from " << rank << " to " << partner << " and receiving from "
-        << partnerp << " in buffer[" << rp * count << "]\n";
+        for (int j = 0; j < count; j++) {
+            std::cout << "\tSending buffer[" << (ri * count + j)<< "] = " << buffer[(ri * count + j)]
+                      << " from " << rank << " to " << partner << " and receiving from "
+                      << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+        }
         MPI_SendRecv(buffer + ri * count, buffer + rp * count,
-                     sizeof(buffer[ri * count]) * count, sizeof(buffer[rp * count] * count),
+                     sizeof(buffer[ri * count]) * count, sizeof(buffer[rp * count]) * count,
                      partner, partnerp, tag);
-        std::cout << "\tSent=" + buffer[ri * count] << " Received=" << buffer[rp * count]
-        << "\n";
+        for (int j = 0; j < count; j++) {
+            std::cout << "\tSent=" + buffer[ri * count + j] << " Received=" << buffer[rp * count + j] << "\n";
+        }
+
         if (--ri == -1) ri = n-1;
         if (--rp == -1) rp = n-1;
     }
