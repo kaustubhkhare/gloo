@@ -69,6 +69,11 @@ int MPI_SendRecv(
     urecvbuf->waitRecv();
 }
 
+int MPI_Barrier() {
+    gloo::BarrierOptions opts(k_context);
+    gloo::barrier(opts);
+}
+
 void runBcast(int rank, int size, int arrSize) {
     int debug = 0;
     if (debug)
@@ -223,12 +228,12 @@ double runGather(const int rank , int size, double input) {
     if (rank == 0){
         for (int all = 1; all < size; all++) {
 //            std::cout << "Process waiting at " << rank << " for " << all << "\n";
-            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
+            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag);
             allTimes.push_back(recvBuffer[0]);
         }
     } else {
 //        std::cout << "Sending from " << rank << " to root" << "\n";
-        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
+        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag);
 //        std::cout << "\tSent" << "\n";
     }
 
@@ -269,13 +274,13 @@ int main(int argc, char* argv[]) {
 
     std::vector<double> all_stat;
     for (int i = 0; i < iterations; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier();
         const auto start = std::chrono::high_resolution_clock::now();
         runBcast(rank, size, vsize);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier();
         double maxTime = runGather(rank, size, elapsed_ts);
         if (rank == 0) {
 //            std::cout << "max timing for " << i << " is " << maxTime << std::endl;
