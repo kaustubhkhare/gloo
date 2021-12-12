@@ -205,10 +205,9 @@ int main(int argc, char* argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
         getenv("RANK") == nullptr ||
-        getenv("NETWORK") == nullptr ||
-        getenv("VSIZE") == nullptr) {
-        if (getenv("VSIZE") == nullptr)
-            std::cerr << "Please set VSIZE" << std::endl;
+            getenv("ITERS") == nullptr ||
+            getenv("NETWORK") == nullptr ||
+            getenv("INPUT_SIZE") == nullptr) {
         std::cerr
                 << "Please set environment variables PREFIX, SIZE, RANK NETWORK and VSIZE"
                 << std::endl;
@@ -217,7 +216,8 @@ int main(int argc, char* argv[]) {
     std::string prefix = getenv("PREFIX");
     int rank = atoi(getenv("RANK"));
     int size = atoi(getenv("SIZE"));
-    int vsize = atoi(getenv("VSIZE"));
+    int vsize = atoi(getenv("INPUT_SIZE"));
+    int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
 
 //    std::cout << "Running init" << "\n";
