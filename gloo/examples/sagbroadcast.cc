@@ -154,17 +154,33 @@ void runBcast(int rank, int size) {
     int ri = rank, rp = rank - 1;
     if (rp < 0) rp = n - 1;
     for (int i = 0; i < n - 1; ++i) {
-        for (int j = 0; j < count; j++) {
-            std::cout << "\tSending buffer[" << (ri * count + j)<< "] = " << recvbuf[(ri * count + j)]
-                      << " from " << rank << " to " << partner << " and receiving from "
-                      << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+
+        if (rank == 0) {
+            for (int j = 0; j < count; j++) {
+                std::cout << "\tSending buffer[" << (ri * count + j)<< "] = " << sendbuf[(ri * count + j)]
+                          << " from " << rank << " to " << partner << " and receiving from "
+                          << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+            }
+            MPI_SendRecv(sendbuf + ri * count, sendbuf + rp * count,
+                         sizeof(sendbuf[ri * count]) * count, sizeof(sendbuf[rp * count]) * count,
+                         partner, partnerp, tag);
+            for (int j = 0; j < count; j++) {
+                std::cout << "\tSent=" << sendbuf[ri * count + j] << " Received=" << sendbuf[rp * count + j] << "\n";
+            }
+        } else {
+            for (int j = 0; j < count; j++) {
+                std::cout << "\tSending buffer[" << (ri * count + j)<< "] = " << recvbuf[(ri * count + j)]
+                          << " from " << rank << " to " << partner << " and receiving from "
+                          << partnerp << " in buffer[" << (rp * count + j) << "]\n";
+            }
+            MPI_SendRecv(recvbuf + ri * count, recvbuf + rp * count,
+                         sizeof(recvbuf[ri * count]) * count, sizeof(recvbuf[rp * count]) * count,
+                         partner, partnerp, tag);
+            for (int j = 0; j < count; j++) {
+                std::cout << "\tSent=" << recvbuf[ri * count + j] << " Received=" << recvbuf[rp * count + j] << "\n";
+            }
         }
-        MPI_SendRecv(recvbuf + ri * count, recvbuf + rp * count,
-                     sizeof(recvbuf[ri * count]) * count, sizeof(recvbuf[rp * count]) * count,
-                     partner, partnerp, tag);
-        for (int j = 0; j < count; j++) {
-            std::cout << "\tSent=" << recvbuf[ri * count + j] << " Received=" << recvbuf[rp * count + j] << "\n";
-        }
+
 
         if (--ri == -1) ri = n-1;
         if (--rp == -1) rp = n-1;
