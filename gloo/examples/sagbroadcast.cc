@@ -220,6 +220,7 @@ int main(int argc, char* argv[]) {
         getenv("RANK") == nullptr ||
         getenv("NETWORK") == nullptr ||
         getenv("VSIZE") == nullptr) {
+        std::cout << "Hello" << "\n";
         if (getenv("VSIZE") == nullptr)
             std::cerr << "Please set VSIZE" << std::endl;
         else if (getenv("NETWORK") == nullptr)

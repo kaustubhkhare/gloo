@@ -94,6 +94,7 @@ void run(int rank, int size) {
 }
 
 void runBcast(int rank, int size, int vsize) {
+    int debug = 0;
     std::cout << "Bcast " << rank << " " << size << "\n";
     int buffer[vsize];
     int tag = 5643;
