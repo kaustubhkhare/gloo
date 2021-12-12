@@ -95,7 +95,7 @@ void run(int rank, int size) {
 
 void runBcast(int rank, int size) {
     std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[8];
+    int buffer[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     int tag = 5643;
 
     int logn = 1  << ( __builtin_ctz(rank));
@@ -106,7 +106,7 @@ void runBcast(int rank, int size) {
         const int partner = rank ^ (1 << __builtin_ctz(rank));
         std::cout << "Waiting at " << rank << " for " << partner << "\n";
         MPI_Recv(buffer, sizeof(buffer), partner, tag);
-        std::cout << "\tReceived" << "\n";
+        std::cout << "\tReceived" << sizeof(buffer) << "\n";
     }
 
     while (logn > 0) {
