@@ -89,7 +89,7 @@ void runBcast(int rank, int size, int arrSize) {
 
     int w;
     int n = size;
-    int count = arrSize / 4;
+    int count = arrSize / size;
 
     if (rank == 0) {
         if (__builtin_popcount(n) > 1) // count number of 1s set in the binary representation
@@ -139,7 +139,7 @@ void runBcast(int rank, int size, int arrSize) {
 
     if (debug) {
         std::cout << "Received Array: ";
-        for (int i = 0; i < cn; i++) {
+        for (int i = 0; i < arrSize; i++) {
             std::cout << recvbuf[i] << " ";
         }
         std::cout << "\n";
