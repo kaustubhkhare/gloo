@@ -143,7 +143,10 @@ int main(int argc, char* argv[]) {
     int size = atoi(getenv("SIZE"));
     int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
-    int inputEle = atoi("INPUT_SIZE");
+    int inputEle = atoi(getenv("INPUT_SIZE"));
+
+    cout << "input size= " << inputEle << "\n";
+
 
     init(rank, size, prefix, network);
 
