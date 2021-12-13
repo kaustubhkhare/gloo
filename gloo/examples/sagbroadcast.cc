@@ -202,17 +202,17 @@ void init(int rank, int size, std::string prefix, std::string network) {
 //    attr.iface = "lo";
     attr.ai_family = AF_UNSPEC;
 
-    std::cout << "Creating device " << "\n";
+//    std::cout << "Creating device " << "\n";
     auto dev = gloo::transport::tcp::CreateDevice(attr);
-    std::cout << "Creating fileStore " << "\n";
+//    std::cout << "Creating fileStore " << "\n";
     auto fileStore = gloo::rendezvous::FileStore("/proj/UWMadison744-F21/groups/akc/rendezvous_checkpoint/");
-    std::cout << "Creating prefixStore " << "\n";
+//    std::cout << "Creating prefixStore " << "\n";
     auto prefixStore = gloo::rendezvous::PrefixStore(prefix, fileStore);
-    std::cout << "Creating context " << "\n";
+//    std::cout << "Creating context " << "\n";
     auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
-    std::cout << "Creating fullMesh " << "\n";
+//    std::cout << "Creating fullMesh " << "\n";
     context->connectFullMesh(prefixStore, dev);
-    std::cout << "Creating kContext " << "\n";
+//    std::cout << "Creating kContext " << "\n";
     k_context = std::move(context);
     rank = k_context->rank;
     size = k_context->size;
