@@ -1,10 +1,10 @@
 mkdir -p ~/logs
 cd /proj/UWMadison744-F21/groups/akc/gloo/build
 #iters=(30000 20000 13333 8888 5925 3950 2633 1500 1000)
-iters=(500 500)
+iters=(10)
 #iters=(1 1 1 1 1 1 1 1 1)
 #cnt=(10 100 500 1000 5000 20000 80000 100000 140000)
-cnt=(180000 220000)
+cnt=(1000000)
 rm ~/logs/${4}.log
 #netw=$((ifconfig | grep -B1 $(ping -c1 $(hostname | cut -d "." -f1) | head -1 | cut -d " " -f3 | cut -c2- | rev | cut -c2- | rev)) | head -1 | cut -d " " -f1 | rev | cut -c2- | rev)
 for i in `seq 0 1`; do
