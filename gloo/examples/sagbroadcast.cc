@@ -99,7 +99,7 @@ void runBcast(int rank, int size, int arrSize) {
         w = (1 << __builtin_ctz(rank)); // count trailing number of 0s in binary representation
     if (rank != 0) {
         if (debug)
-            std::cout << "\tWaiting to receive from " << (rank ^ w) << "\n";
+            std::cout << "\tWaiting to receive from " << (rank ^ w) << " elements count=" << (rank * arrSize / size) << "\n";
         MPI_Recv(recvbuf + (rank * arrSize / size), sizeof(int) * (count * w), rank ^ w, tag);
 
         if (debug) {
@@ -107,7 +107,7 @@ void runBcast(int rank, int size, int arrSize) {
             for (int i = 0; i < count * w; i++) {
                 std::cout << recvbuf[i + (rank * arrSize / size)] << " ";
             }
-            std::cout << "\n";
+            std::cout << " w=" << w << " count=" << count << "\n";
         }
     } else {
     }
