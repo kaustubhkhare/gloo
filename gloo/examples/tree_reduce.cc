@@ -67,7 +67,7 @@ void runTreeReduce(const int rank, int size, int inputEle) {
     int partner;
     int round = log2(size);
     int mask = 1;
-    std::cout << "tree_red run: " << round << " " << sizeof(sendBuffer) << " " << inputEle << "\n";
+//    std::cout << "tree_red run: " << round << " " << sizeof(sendBuffer) << " " << inputEle << "\n";
     while (round) {
         partner = rank ^ mask;
 
@@ -144,9 +144,6 @@ int main(int argc, char* argv[]) {
     int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
     int inputEle = atoi(getenv("INPUT_SIZE"));
-
-    cout << "input size= " << inputEle << "\n";
-
 
     init(rank, size, prefix, network);
 
