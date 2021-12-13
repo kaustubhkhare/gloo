@@ -76,7 +76,7 @@ int MPI_Barrier() {
 }
 
 void runBcast(int rank, int size, int arrSize) {
-    int debug = 1;
+    int debug = 0;
     if (debug)
         std::cout << "Bcast " << rank << " " << size << "\n";
     int tag = 5643;
