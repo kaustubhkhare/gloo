@@ -62,16 +62,12 @@ int MPI_Send(
 
 void runTreeReduce(const int rank, int size, int inputEle) {
     int sendBuffer[inputEle];
-    for (int j = 0; j < inputEle; j++){
-        int num = rand() % 101;
-        sendBuffer[inputEle] = num;
-    }
     int recvBuffer[inputEle] = {0};
     const int tag = 5643;
     int partner;
     int round = log2(size);
     int mask = 1;
-
+    std::cout << "tree_red run: " << round << " " << sizeof(sendBuffer) << " " << inputEle << "\n";
     while (round) {
         partner = rank ^ mask;
 
@@ -91,7 +87,7 @@ void runTreeReduce(const int rank, int size, int inputEle) {
 }
 
 double runGather(const int rank , int size, double input) {
-    double sendBuffer[] = {input};
+    double sendBuffer[1] = {input};
     double recvBuffer[1];
     const int tag = 564;
     std::vector<double> allTimes;
@@ -115,42 +111,19 @@ double runGather(const int rank , int size, double input) {
         return 0;
     }
 }
-//void init(int rank, int size, std::string prefix, std::string network) {
-//    gloo::transport::tcp::attr attr;
-//    attr.iface = network;
-//    attr.ai_family = AF_UNSPEC;
-//
-//    auto dev = gloo::transport::tcp::CreateDevice(attr);
-//    auto fileStore = gloo::rendezvous::FileStore("/proj/UWMadison744-F21/groups/akc/rendezvous_checkpoint-CT");
-//    auto prefixStore = gloo::rendezvous::PrefixStore(prefix, fileStore);
-//    auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
-//    context->connectFullMesh(prefixStore, dev);
-//    k_context = std::move(context);
-//    rank = k_context->rank;
-//    size = k_context->size;
-//}
 void init(int rank, int size, std::string prefix, std::string network) {
     gloo::transport::tcp::attr attr;
     attr.iface = network;
-//    attr.iface = "lo";
     attr.ai_family = AF_UNSPEC;
 
-//    std::cout << "Creating device " << "\n";
     auto dev = gloo::transport::tcp::CreateDevice(attr);
-//    std::cout << "Creating fileStore " << "\n";
     auto fileStore = gloo::rendezvous::FileStore("/proj/UWMadison744-F21/groups/akc/rendezvous_checkpoint-CT");
-//    std::cout << "Creating prefixStore " << "\n";
     auto prefixStore = gloo::rendezvous::PrefixStore(prefix, fileStore);
-//    std::cout << "Creating context " << "\n";
     auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
-//    std::cout << "Creating fullMesh " << "\n";
     context->connectFullMesh(prefixStore, dev);
-//    std::cout << "Creating kContext " << "\n";
     k_context = std::move(context);
     rank = k_context->rank;
     size = k_context->size;
-
-//    std::cout << "rank=" << rank << "size=" << size << std::endl;
 }
 
 int main(int argc, char* argv[]) {
