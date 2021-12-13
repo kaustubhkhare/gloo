@@ -290,15 +290,15 @@ int main(int argc, char* argv[]) {
     }
 
     if (rank == 0) {
-//        double sum = std::accumulate(all_stat.begin(), all_stat.end(), 0.0);
-//        std::sort(all_stat.begin(), all_stat.end());
-//        double median = all_stat[all_stat.size()/2];
-//        double avg = sum / iterations;
-//        std::cout << "median is " << median << "\n";
-//        std::cout << "average is " << avg << std::endl;
-        std::cout << "stats: ";
-        for (auto ts : all_stat) std::cout << ts << " ";
-        std::cout << "\n";
+        double sum = std::accumulate(all_stat.begin(), all_stat.end(), 0.0);
+        std::sort(all_stat.begin(), all_stat.end());
+        double median = all_stat[all_stat.size()/2];
+        double avg = sum / iterations;
+        std::cout << median << "\n";
+        std::cout << avg << std::endl;
+//        std::cout << "stats: ";
+//        for (auto ts: all_stat) std::cout << ts << " ";
+//        std::cout << "\n";
     }
 
 
