@@ -122,42 +122,22 @@ void runReduceScatter(int rank, int size, int inputEle) {
 
     while (mask){
         partner = mask ^ rank;
-
+        std::fill(recvBuffer, recvBuffer + inputEle, 0); // TODO: (1)
+        offset = begin + (end - begin) / 2;
+        sendOffset = offset * sizeof(int);
+        receiveOffset = begin * sizeof(int);
+        sendReceiveBytes = (sendOffset - receiveOffset);
+        MPI_Send_n_Recieve(
+                sendBuffer, sizeof(sendBuffer), partner, tag,
+                recvBuffer, sizeof(recvBuffer), partner, tag,
+                sendOffset, receiveOffset, sendReceiveBytes,
+                MPI_COMM_WORLD);
+        for (int c = 0; c < inputEle /* TODO: (1) */; c++) {
+            sendBuffer[c] += recvBuffer[c];
+        }
         if (rank & mask){
-            std::fill(recvBuffer, recvBuffer + inputEle, 0);
-            offset = begin + (end - begin) / 2;
-            sendOffset = begin * sizeof(int);
-            receiveOffset = offset * sizeof(int);
-            sendReceiveBytes = (receiveOffset - sendOffset);
-
-            MPI_Send_n_Recieve(
-                    sendBuffer, sizeof(sendBuffer), partner, tag,
-                    recvBuffer, sizeof(recvBuffer), partner, tag,
-                    sendOffset, receiveOffset, sendReceiveBytes,
-                    MPI_COMM_WORLD);
-//            for (int c = 0; c < 8 ; c++) {
-//                std::cout << recvBuffer[c] << " ";
-//            }
-            for (int c = 0; c < inputEle ; c++) {
-                sendBuffer[c] = sendBuffer[c] + recvBuffer[c];
-//                std::cout << sendBuffer[c] << " ";
-            }
-//            std::cout << std::endl;
             begin = offset;
         } else {
-            std::fill(recvBuffer, recvBuffer + inputEle, 0);
-            offset = begin + (end - begin) / 2;
-            sendOffset = offset * sizeof(int);
-            receiveOffset = begin * sizeof(int);
-            sendReceiveBytes = (sendOffset - receiveOffset);
-            MPI_Send_n_Recieve(
-                    sendBuffer, sizeof(sendBuffer), partner, tag,
-                    recvBuffer, sizeof(recvBuffer), partner, tag,
-                    sendOffset, receiveOffset, sendReceiveBytes,
-                    MPI_COMM_WORLD);
-            for (int c = 0; c < inputEle; c++) {
-                sendBuffer[c] = sendBuffer[c] + recvBuffer[c];
-            }
             end = offset;
         }
         mask >>= 1;
