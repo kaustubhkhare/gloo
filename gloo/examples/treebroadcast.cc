@@ -94,10 +94,11 @@ void run(int rank, int size) {
     MPI_Barrier();
 }
 
-void runBcast(int rank, int size, int vsize, int* buffer) {
+void runBcast(int rank, int size, int vsize) {
     int debug = 0;
     if (debug)
         std::cout << "Bcast " << rank << " " << size << "\n";
+    int buffer[vsize];
     int tag = 5643;
 
     int logn = 1  << ( __builtin_ctz(rank));
@@ -108,7 +109,7 @@ void runBcast(int rank, int size, int vsize, int* buffer) {
         const int partner = rank ^ (1 << __builtin_ctz(rank));\
         if (debug)
             std::cout << "Waiting at " << rank << " for " << partner << "\n";
-        MPI_Recv(buffer, sizeof(buffer) * vsize, partner, tag);
+        MPI_Recv(buffer, sizeof(buffer), partner, tag);
         if (debug)
             std::cout << "\tReceived" << sizeof(buffer) << "\n";
     }
@@ -118,7 +119,7 @@ void runBcast(int rank, int size, int vsize, int* buffer) {
         if (partner > rank && partner < size) {
             if (debug)
                 std::cout << "Sending from " << rank << " to " << partner << "\n";
-            MPI_Send(buffer, sizeof(buffer) * vsize, partner, tag);
+            MPI_Send(buffer, sizeof(buffer), partner, tag);
             if (debug)
                 std::cout << "\tSent" << "\n";
         }
@@ -220,21 +221,19 @@ int main(int argc, char* argv[]) {
     int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
 
-    int* buffer = new int[vsize];
-
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
 
     for (int i = 0; i < 10; i++) {
-        runBcast(rank, size, vsize, buffer);
+        runBcast(rank, size, vsize);
     }
 
     std::vector<double> all_stat;
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier();
         const auto start = std::chrono::high_resolution_clock::now();
-        runBcast(rank, size, vsize, buffer);
+        runBcast(rank, size, vsize);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();
