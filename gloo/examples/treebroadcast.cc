@@ -94,11 +94,10 @@ void run(int rank, int size) {
     MPI_Barrier();
 }
 
-void runBcast(int rank, int size, int vsize) {
+void runBcast(int rank, int size, int vsize, int* buffer) {
     int debug = 0;
     if (debug)
         std::cout << "Bcast " << rank << " " << size << "\n";
-    int buffer[vsize];
     int tag = 5643;
 
     int logn = 1  << ( __builtin_ctz(rank));
@@ -221,12 +220,14 @@ int main(int argc, char* argv[]) {
     int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
 
+    int buffer[vsize];
+
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
 
     for (int i = 0; i < 10; i++) {
-        runBcast(rank, size, vsize);
+        runBcast(rank, size, vsize, buffer);
     }
 
     std::vector<double> all_stat;
