@@ -108,7 +108,7 @@ void runBcast(int rank, int size, int vsize, int* buffer) {
         const int partner = rank ^ (1 << __builtin_ctz(rank));\
         if (debug)
             std::cout << "Waiting at " << rank << " for " << partner << "\n";
-        MPI_Recv(buffer, sizeof(buffer), partner, tag);
+        MPI_Recv(buffer, sizeof(buffer) * vsize, partner, tag);
         if (debug)
             std::cout << "\tReceived" << sizeof(buffer) << "\n";
     }
@@ -118,7 +118,7 @@ void runBcast(int rank, int size, int vsize, int* buffer) {
         if (partner > rank && partner < size) {
             if (debug)
                 std::cout << "Sending from " << rank << " to " << partner << "\n";
-            MPI_Send(buffer, sizeof(buffer), partner, tag);
+            MPI_Send(buffer, sizeof(buffer) * vsize, partner, tag);
             if (debug)
                 std::cout << "\tSent" << "\n";
         }
