@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
     int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
 
-    int buffer[vsize];
+    int* buffer = new int[vsize];
 
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
