@@ -267,8 +267,8 @@ int main(int argc, char* argv[]) {
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
 
-    int recvbuf[vsize];
-    int sendbuf[vsize];
+    int* recvbuf = new int[vsize];
+    int* sendbuf = new int[vsize];
 
     for (int i = 0; i < 10; i++) {
         runBcast(rank, size, vsize, recvbuf, sendbuf);

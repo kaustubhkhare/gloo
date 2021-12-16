@@ -144,8 +144,8 @@ int main(int argc, char* argv[]) {
     int inputEle = atoi(getenv("INPUT_SIZE"));
 
     init(rank, size, prefix, network);
-    int sendBuffer[inputEle];
-    int recvBuffer[inputEle] = {0};
+    int* sendBuffer = new int[inputEle];
+    int* recvBuffer = new int[inputEle];
 
     for (int i = 0; i < 10; i++) {
         runTreeReduce(rank, size, inputEle, sendBuffer, recvBuffer);
