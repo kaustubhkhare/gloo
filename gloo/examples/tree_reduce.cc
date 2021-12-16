@@ -63,10 +63,10 @@ int MPI_Send(
 void runTreeReduce(const int rank, int size, int inputEle, int* sendBuffer, int* recvBuffer) {
     const int tag = 5643;
     int partner;
-    int round = log2(size);
+//    int round = log2(size);
     int mask = 1;
 //    std::cout << "tree_red run: " << round << " " << sizeof(sendBuffer) << " " << inputEle << "\n";
-    while (round) {
+    while (mask < size) {
         partner = rank ^ mask;
 
         if (rank & mask ) {
@@ -80,7 +80,7 @@ void runTreeReduce(const int rank, int size, int inputEle, int* sendBuffer, int*
         }
 
         mask <<= 1;
-        round--;
+//        round--;
     }
 }
 

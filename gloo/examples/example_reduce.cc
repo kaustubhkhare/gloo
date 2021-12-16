@@ -8,10 +8,10 @@
 #include <typeinfo>
 
 #include "gloo/reduce.h"
+#include "gloo/transport/tcp/device.h"
 #include "gloo/rendezvous/context.h"
 #include "gloo/rendezvous/file_store.h"
 #include "gloo/rendezvous/prefix_store.h"
-#include "gloo/transport/uv/device.h"
 
 // Usage:
 //
@@ -65,8 +65,9 @@ int main(void) {
   // multi-homed machines that all share the same network interface
   // name, for example.
   //
-  gloo::transport::uv::attr attr;
-  // attr.iface = "eth0";
+  gloo::transport::tcp::attr attr;
+   attr.iface = "enp6s0f1";
+
   // attr.iface = "ib0";
   // attr.iface = "Wi-Fi";
 
@@ -86,7 +87,7 @@ int main(void) {
   //   auto dev = gloo::transport::tcp::CreateDevice("localhost");
   //
 
-  auto dev = gloo::transport::uv::CreateDevice(attr);
+  auto dev = gloo::transport::tcp::CreateDevice(attr);
 
   // Now that we have a device, we can connect all participating
   // processes. We call this process "rendezvous". It can be performed
@@ -99,7 +100,7 @@ int main(void) {
   // Below, we instantiate rendezvous using the filesystem, given that
   // this example uses multiple processes on a single machine.
   //
-  auto fileStore = gloo::rendezvous::FileStore("/libtmp");
+  auto fileStore = gloo::rendezvous::FileStore("/proj/UWMadison744-F21/groups/akc/rendezvous_checkpoint-CT/");
 
   // To be able to reuse the same store over and over again and not have
   // interference between runs, we scope it to a unique prefix with the
