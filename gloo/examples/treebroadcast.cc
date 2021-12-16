@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier();
         const auto start = std::chrono::high_resolution_clock::now();
-        runBcast(rank, size, vsize);
+        runBcast(rank, size, vsize, buffer);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();

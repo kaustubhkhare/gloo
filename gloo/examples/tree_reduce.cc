@@ -60,9 +60,7 @@ int MPI_Send(
     ubuf->waitSend();
 }
 
-void runTreeReduce(const int rank, int size, int inputEle) {
-    int sendBuffer[inputEle];
-    int recvBuffer[inputEle] = {0};
+void runTreeReduce(const int rank, int size, int inputEle, int* sendBuffer, int* recvBuffer) {
     const int tag = 5643;
     int partner;
     int round = log2(size);
@@ -72,10 +70,10 @@ void runTreeReduce(const int rank, int size, int inputEle) {
         partner = rank ^ mask;
 
         if (rank & mask ) {
-            MPI_Send(sendBuffer, sizeof(sendBuffer), partner, tag, MPI_COMM_WORLD);
+            MPI_Send(sendBuffer, sizeof(int) * inputEle, partner, tag, MPI_COMM_WORLD);
             return;
         } else {
-            MPI_Recv(recvBuffer, sizeof(recvBuffer), partner, tag, MPI_COMM_WORLD);
+            MPI_Recv(recvBuffer, sizeof(int) * inputEle, partner, tag, MPI_COMM_WORLD);
             for (int c = 0; c < inputEle; c++) {
                 sendBuffer[c] = sendBuffer[c] + recvBuffer[c];
             }
@@ -146,16 +144,18 @@ int main(int argc, char* argv[]) {
     int inputEle = atoi(getenv("INPUT_SIZE"));
 
     init(rank, size, prefix, network);
+    int sendBuffer[inputEle];
+    int recvBuffer[inputEle] = {0};
 
     for (int i = 0; i < 10; i++) {
-        runTreeReduce(rank, size, inputEle);
+        runTreeReduce(rank, size, inputEle, sendBuffer, recvBuffer);
     }
 
     std::vector<double> all_stat;
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier(MPI_COMM_WORLD);
         const auto start = std::chrono::high_resolution_clock::now();
-        runTreeReduce(rank, size, inputEle);
+        runTreeReduce(rank, size, inputEle, sendBuffer, recvBuffer);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();

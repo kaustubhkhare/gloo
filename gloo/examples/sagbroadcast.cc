@@ -75,7 +75,7 @@ int MPI_Barrier() {
     gloo::barrier(opts);
 }
 
-void runBcast(int rank, int size, int arrSize) {
+void runBcast(int rank, int size, int arrSize, int* recvbuf, int* sendbuf) {
     int debug = 0;
     if (debug)
         std::cout << "Bcast " << rank << " " << size << "\n";
@@ -84,8 +84,6 @@ void runBcast(int rank, int size, int arrSize) {
 
     if (debug)
         std::cout << "Running scatter on " << rank << "\n";
-    int recvbuf[arrSize];
-    int sendbuf[arrSize];
 
     int w;
     int n = size;
@@ -162,7 +160,7 @@ void runBcast(int rank, int size, int arrSize) {
                 }
             }
             MPI_SendRecv(sendbuf + ri * count, sendbuf + rp * count,
-                         sizeof(sendbuf[ri * count]) * count, sizeof(sendbuf[rp * count]) * count,
+                         sizeof(int) * count, sizeof(int) * count,
                          partner, partnerp, tag);
             if (debug) {
                 for (int j = 0; j < count; j++) {
@@ -179,7 +177,7 @@ void runBcast(int rank, int size, int arrSize) {
                 }
             }
             MPI_SendRecv(recvbuf + ri * count, recvbuf + rp * count,
-                         sizeof(recvbuf[ri * count]) * count, sizeof(recvbuf[rp * count]) * count,
+                         sizeof(int) * count, sizeof(int) * count,
                          partner, partnerp, tag);
             if (debug) {
                 for (int j = 0; j < count; j++) {
@@ -269,15 +267,18 @@ int main(int argc, char* argv[]) {
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
 
+    int recvbuf[vsize];
+    int sendbuf[vsize];
+
     for (int i = 0; i < 10; i++) {
-        runBcast(rank, size, vsize);
+        runBcast(rank, size, vsize, recvbuf, sendbuf);
     }
 
     std::vector<double> all_stat;
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier();
         const auto start = std::chrono::high_resolution_clock::now();
-        runBcast(rank, size, vsize);
+        runBcast(rank, size, vsize, recvbuf, sendbuf);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();
