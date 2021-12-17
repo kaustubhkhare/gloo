@@ -107,7 +107,7 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
         int recvBytes;
         int endOffset;
         sendBytes = (mid - begin) * sizeof(int);
-        recvBytes = (end - mid) * sizeof(int)
+        recvBytes = (end - mid) * sizeof(int);
         sendOffset = begin;
         recvOffset = mid;
         endOffset = end;
@@ -142,21 +142,21 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
     for (int i = 0; i < input_size; i++)
         std::cout << sendBuffer[i] << ", ";
     std::cout << std::endl;
-
-    // run Gather
-    if (rank == 0){
-        for (int all = 1; all < size; all++) {
-            int recvOffset = all * input_size / size * sizeof(int);
-            int receiveBytes = input_size / size * sizeof(int);
-            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, recvOffset, receiveBytes, MPI_COMM_WORLD);
-            for (int c = all * input_size/size; c < (all+1)*input_size/size; c++) {
-                sendBuffer[c] = recvBuffer[c];
-            }
-        }
-    } else {
-        int sendBytes = input_size / size * sizeof(int);
-        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, rank * input_size / size * sizeof(int), sendBytes, MPI_COMM_WORLD);
-    }
+//
+//    // run Gather
+//    if (rank == 0){
+//        for (int all = 1; all < size; all++) {
+//            int recvOffset = all * input_size / size * sizeof(int);
+//            int receiveBytes = input_size / size * sizeof(int);
+//            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, recvOffset, receiveBytes, MPI_COMM_WORLD);
+//            for (int c = all * input_size/size; c < (all+1)*input_size/size; c++) {
+//                sendBuffer[c] = recvBuffer[c];
+//            }
+//        }
+//    } else {
+//        int sendBytes = input_size / size * sizeof(int);
+//        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, rank * input_size / size * sizeof(int), sendBytes, MPI_COMM_WORLD);
+//    }
 //    if (rank == 0) {
 //        for (int c = 0; c < 8; c++) {
 //            std::cout << sendBuffer[c] << " ";
@@ -164,32 +164,32 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
 //        std::cout << std::endl;
 //    }
 }
-
-double runGather(const int rank , int size, double input) {
-    double sendBuffer[] = {input};
-    double recvBuffer[1];
-    const int tag = 564;
-    std::vector<double> allTimes;
-
-    if (rank == 0){
-        for (int all = 1; all < size; all++) {
-//            std::cout << "Process waiting at " << rank << " for " << all << "\n";
-            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
-            allTimes.push_back(recvBuffer[0]);
-        }
-    } else {
-//        std::cout << "Sending from " << rank << " to root" << "\n";
-        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
-//        std::cout << "\tSent" << "\n";
-    }
-
-    if (rank == 0) {
-        auto it  = std::max_element(std::begin(allTimes), std::end(allTimes));
-        return *it;
-    } else{
-        return 0;
-    }
-}
+//
+//double runGather(const int rank , int size, double input) {
+//    double sendBuffer[] = {input};
+//    double recvBuffer[1];
+//    const int tag = 564;
+//    std::vector<double> allTimes;
+//
+//    if (rank == 0){
+//        for (int all = 1; all < size; all++) {
+////            std::cout << "Process waiting at " << rank << " for " << all << "\n";
+//            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
+//            allTimes.push_back(recvBuffer[0]);
+//        }
+//    } else {
+////        std::cout << "Sending from " << rank << " to root" << "\n";
+//        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
+////        std::cout << "\tSent" << "\n";
+//    }
+//
+//    if (rank == 0) {
+//        auto it  = std::max_element(std::begin(allTimes), std::end(allTimes));
+//        return *it;
+//    } else{
+//        return 0;
+//    }
+//}
 
 void init(int rank, int size, std::string prefix, std::string network) {
     gloo::transport::tcp::attr attr;
