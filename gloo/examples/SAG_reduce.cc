@@ -174,12 +174,12 @@ double runGather(const int rank , int size, double input) {
     if (rank == 0){
         for (int all = 1; all < size; all++) {
 //            std::cout << "Process waiting at " << rank << " for " << all << "\n";
-            MPI_Recv1(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
+            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
             allTimes.push_back(recvBuffer[0]);
         }
     } else {
 //        std::cout << "Sending from " << rank << " to root" << "\n";
-        MPI_Send1(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
+        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
 //        std::cout << "\tSent" << "\n";
     }
 
