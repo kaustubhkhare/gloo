@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
 //    }
 
     std::vector<double> all_stat;
-    constexpr int N = 4;
+    constexpr int N = 8;
     int send_buf[N], recv_buf[N];
     std::fill(recv_buf, recv_buf + N, 0);
     for (int i = 0; i < N; i++) {
