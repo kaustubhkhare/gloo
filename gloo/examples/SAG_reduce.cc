@@ -36,7 +36,7 @@ int MPI_Barrier(MPI_Comm comm) {
     gloo::barrier(opts);
 }
 
-int MPI_Recv1(
+int MPI_Recv(
         void *buf,
         ssize_t bytes,
         int source,
@@ -47,7 +47,7 @@ int MPI_Recv1(
     ubuf->waitRecv();
 }
 
-int MPI_Send1(
+int MPI_Send(
         const void *cbuf,
         ssize_t bytes,
         int dest,
@@ -58,18 +58,18 @@ int MPI_Send1(
     ubuf->waitSend();
 }
 
-int MPI_Recv(
-        void *buf,
-        ssize_t bytes,
-        int source,
-        int tag,
-        int receiveOffset,
-        size_t receiveBytes,
-        MPI_Comm comm) {
-    auto ubuf = k_context->createUnboundBuffer(buf, bytes);
-    ubuf->recv(source, tag, receiveOffset, receiveBytes);
-    ubuf->waitRecv();
-}
+//int MPI_Recv(
+//        void *buf,
+//        ssize_t bytes,
+//        int source,
+//        int tag,
+//        int recvOffset,
+//        size_t receiveBytes,
+//        MPI_Comm comm) {
+//    auto ubuf = k_context->createUnboundBuffer(buf, bytes);
+//    ubuf->recv(source, tag, recvOffset, receiveBytes);
+//    ubuf->waitRecv();
+//}
 
 int MPI_Send_n_Recieve(
         const void *ubuf,
@@ -80,82 +80,82 @@ int MPI_Send_n_Recieve(
         ssize_t rbytes,
         int src,
         int stag,
-        int sendOffset,
-        int receiveOffset,
-        size_t sendReceiveBytes,
         MPI_Comm comm) {
     auto sbuf = k_context->createUnboundBuffer(const_cast<void*>(ubuf), sbytes);
     auto rbuf = k_context->createUnboundBuffer(const_cast<void*>(vbuf), rbytes);
-    sbuf->send(dest, dtag, sendOffset, sendReceiveBytes);
-    rbuf->recv(src, stag, receiveOffset, sendReceiveBytes);
+    sbuf->send(dest, dtag);
+    rbuf->recv(src, stag);
     sbuf->waitSend();
     rbuf->waitRecv();
 }
 
-int MPI_Send(
-        const void *cbuf,
-        ssize_t bytes,
-        int dest,
-        int tag,
-        int sendOffset,
-        size_t sendBytes,
-        MPI_Comm comm) {
-    auto ubuf = k_context->createUnboundBuffer(const_cast<void*>(cbuf), bytes);
-    ubuf->send(dest, tag, sendOffset, sendBytes);
-    ubuf->waitSend();
-}
 
-void runReduceScatter(int rank, int size, int inputEle) {
-    int sendBuffer [inputEle];
-    for (int j = 0; j < inputEle; j++){
-        int num = rand() % 101;
-        sendBuffer[inputEle] = num;
-    }
-    int recvBuffer[inputEle];
-    int tag = 5643;
+void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* recvBuffer) {
+    const int tag = 5643;
     int partner;
     int mask = size / 2;
     int begin = 0;
-    int end = inputEle;
-    int offset, sendOffset, receiveOffset;
-    size_t sendReceiveBytes;
+    int end = input_size;
+    int sendOffset, recvOffset;
 
-    while (mask){
+    std::fill(recvBuffer, recvBuffer + input_size, 0);
+    int round = 0;
+    while (mask) {
         partner = mask ^ rank;
-        std::fill(recvBuffer, recvBuffer + inputEle, 0); // TODO: (1)
-        offset = begin + (end - begin) / 2;
-        sendOffset = offset * sizeof(int);
-        receiveOffset = begin * sizeof(int);
-        sendReceiveBytes = (sendOffset - receiveOffset);
+        const int mid = (end + begin) / 2;
+        int sendBytes;
+        int recvBytes;
+        int endOffset;
+        sendBytes = (mid - begin) * sizeof(int);
+        recvBytes = (end - mid) * sizeof(int)
+        sendOffset = begin;
+        recvOffset = mid;
+        endOffset = end;
+        if (!(rank & mask)) {
+            std::swap(sendOffset, recvOffset);
+            std::swap(sendBytes, recvBytes);
+            endOffset = mid;
+        }
         MPI_Send_n_Recieve(
-                sendBuffer, sizeof(sendBuffer), partner, tag,
-                recvBuffer, sizeof(recvBuffer), partner, tag,
-                sendOffset, receiveOffset, sendReceiveBytes,
+                sendBuffer + sendOffset, sendBytes, partner, tag,
+                recvBuffer + recvOffset, recvBytes, partner, tag,
                 MPI_COMM_WORLD);
-        for (int c = 0; c < inputEle /* TODO: (1) */; c++) {
+        std::cout << "[" << rank << " / " << round << "] S [ "
+                << sendOffset << ":" << sendBytes << "] R ["
+                << recvOffset << ":" << recvBuffer << "] - ";
+        for (int c = recvOffset; c < endOffset; c++) {
             sendBuffer[c] += recvBuffer[c];
+            std::cout << sendBuffer[c] << ", ";
         }
+        std::cout << std::endl;
+        
         if (rank & mask){
-            begin = offset;
+            begin = mid;
         } else {
-            end = offset;
+            end = mid;
         }
+        round++;
         mask >>= 1;
     }
+
+    std::cout << "[" << rank << "] " << "At the end of scatter:";
+    for (int i = 0; i < input_size; i++)
+        std::cout << sendBuffer[i] << ", ";
+    std::cout << std::endl;
 
     // run Gather
     if (rank == 0){
         for (int all = 1; all < size; all++) {
-            int receiveOffset = all * inputEle / size * sizeof(int);
-            int receiveBytes = inputEle / size * sizeof(int);
-            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, receiveOffset, receiveBytes, MPI_COMM_WORLD);
-            for (int c = all * inputEle/size; c < (all+1)*inputEle/size; c++) {
+            int recvOffset = all * input_size / size * sizeof(int);
+            int receiveBytes = input_size / size * sizeof(int);
+            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, recvOffset, receiveBytes, MPI_COMM_WORLD);
+            for (int c = all * input_size/size; c < (all+1)*input_size/size; c++) {
                 sendBuffer[c] = recvBuffer[c];
             }
         }
     } else {
-        int sendBytes = inputEle / size * sizeof(int);
-        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, rank * inputEle / size * sizeof(int), sendBytes, MPI_COMM_WORLD);
+        int sendBytes = input_size / size * sizeof(int);
+        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, rank * input_size / size * sizeof(int), sendBytes, MPI_COMM_WORLD);
     }
 //    if (rank == 0) {
 //        for (int c = 0; c < 8; c++) {
@@ -230,20 +230,27 @@ int main(int argc, char* argv[]) {
     int size = atoi(getenv("SIZE"));
     int iterations = atoi(getenv("ITERS"));
     std::string network = getenv("NETWORK");
-    int inputEle = atoi(getenv("INPUT_SIZE"));
+    int input_size = atoi(getenv("INPUT_SIZE"));
 
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
-    for (int i = 0; i < 10; i++) {
-        runReduceScatter(rank, size, inputEle);
-    }
+//    for (int i = 0; i < 10; i++) { TODO
+//        runReduceScatter(rank, size, input_size);
+//    }
 
     std::vector<double> all_stat;
+    constexpr int N = 4;
+    int send_buf[N], recv_buf[N];
+    std::fill(recv_buf, recv_buf + 16, 0);
+    for (int i = 0; i < N; i++) {
+        send_buf[i] = i;
+    }
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier(MPI_COMM_WORLD);
         const auto start = std::chrono::high_resolution_clock::now();
-        runReduceScatter(rank, size, inputEle);
+        input_size = N;
+        runReduceScatter(rank, size, input_size, send_buf, recv_buf);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();
