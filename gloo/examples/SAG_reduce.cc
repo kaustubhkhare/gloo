@@ -165,31 +165,31 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
 //    }
 }
 //
-//double runGather(const int rank , int size, double input) {
-//    double sendBuffer[] = {input};
-//    double recvBuffer[1];
-//    const int tag = 564;
-//    std::vector<double> allTimes;
-//
-//    if (rank == 0){
-//        for (int all = 1; all < size; all++) {
-////            std::cout << "Process waiting at " << rank << " for " << all << "\n";
-//            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
-//            allTimes.push_back(recvBuffer[0]);
-//        }
-//    } else {
-////        std::cout << "Sending from " << rank << " to root" << "\n";
-//        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
-////        std::cout << "\tSent" << "\n";
-//    }
-//
-//    if (rank == 0) {
-//        auto it  = std::max_element(std::begin(allTimes), std::end(allTimes));
-//        return *it;
-//    } else{
-//        return 0;
-//    }
-//}
+double runGather(const int rank , int size, double input) {
+    double sendBuffer[] = {input};
+    double recvBuffer[1];
+    const int tag = 564;
+    std::vector<double> allTimes;
+
+    if (rank == 0){
+        for (int all = 1; all < size; all++) {
+//            std::cout << "Process waiting at " << rank << " for " << all << "\n";
+            MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
+            allTimes.push_back(recvBuffer[0]);
+        }
+    } else {
+//        std::cout << "Sending from " << rank << " to root" << "\n";
+        MPI_Send(sendBuffer, sizeof(sendBuffer), 0, tag, MPI_COMM_WORLD);
+//        std::cout << "\tSent" << "\n";
+    }
+
+    if (rank == 0) {
+        auto it  = std::max_element(std::begin(allTimes), std::end(allTimes));
+        return *it;
+    } else{
+        return 0;
+    }
+}
 
 void init(int rank, int size, std::string prefix, std::string network) {
     gloo::transport::tcp::attr attr;
