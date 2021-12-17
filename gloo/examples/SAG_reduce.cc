@@ -89,6 +89,9 @@ int MPI_Send_n_Recieve(
     rbuf->waitRecv();
 }
 
+int GT_Gather(void *sendbuf_,
+              void *recvbuf_, int input_size,
+              int rank, int size);
 
 void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* recvBuffer) {
     const int tag = 5643;
@@ -98,7 +101,7 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
     int end = input_size;
     int sendOffset, recvOffset;
 
-    std::fill(recvBuffer, recvBuffer + input_size, 0);
+//    std::fill(recvBuffer, recvBuffer + input_size, 0);
     int round = 0;
     while (mask) {
         partner = mask ^ rank;
@@ -142,9 +145,16 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
     for (int i = 0; i < input_size; i++)
         std::cout << sendBuffer[i] << ", ";
     std::cout << std::endl;
-//
-//    // run Gather
-//    if (rank == 0){
+
+    // run Gather
+    GT_Gather(recvBuffer, recvBuffer, input_size, rank, size);
+    std::cout << "\n\n";
+    std::cout << "[" << rank << "] " << "At the end of gather:";
+    for (int i = 0; i < input_size; i++)
+        std::cout << sendBuffer[i] << ", ";
+
+
+    //    if (rank == 0){
 //        for (int all = 1; all < size; all++) {
 //            int recvOffset = all * input_size / size * sizeof(int);
 //            int receiveBytes = input_size / size * sizeof(int);
@@ -164,6 +174,49 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
 //        std::cout << std::endl;
 //    }
 }
+
+int GT_Gather(void *sendbuf_,
+              void *recvbuf_, int input_size,
+              int rank, int size) {
+    int* sendbuf = (int*)sendbuf_;
+    int* recvbuf = (int*)recvbuf_;
+    const int count = input_size / size;
+
+    if ( (rank & 1) == 1) {
+        return MPI_Send(sendbuf + rank * count, count * sizeof(int), rank ^ 1, tag, MPI_COMM_WORLD);
+    }
+//        return MPI_Send(sendbuf + rank * count, count, recvtype, rank ^ 1, 1, comm);
+
+//    if (rank != 0) {
+//        const int full_sz_b = input_size * sizeof(int);
+//        if (full_sz_b > glob_sz) {
+//            glob_buf = (int*)realloc(glob_buf, full_sz * sizeof(int));
+//            glob_sz = full_sz * sizeof(int);
+//        }
+//        recvbuf = glob_buf;
+//    }
+
+    int bitm = 1;
+//    if ((rank & 1) == 0)
+//        memcpy(recvbuf + rank * count, sendbuf, count * sizeof(int));
+    int szz = count;
+    while (bitm < n) {
+        const int partner = rank ^ bitm;
+        const int offset = rank * count + bitm * count;
+        if (rank & bitm) {
+//                printf("[%d] %d --> %d, off = %d, sz = %d\n", bitm, rank, partner, offset - szz, szz);
+            return MPI_Send(recvbuf + offset - bitm * count, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
+        } else if (partner < n) {
+//            printf("[%d] %d <-- %d, off = %d, sz = %d\n", bitm, rank, partner, offset, szz);
+            MPI_Recv(recvbuf + offset, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
+            szz <<= 1;
+        }
+        bitm <<= 1;
+    }
+}
+
+
+
 //
 double runGather(const int rank , int size, double input) {
     double sendBuffer[] = {input};
