@@ -242,7 +242,7 @@ int main(int argc, char* argv[]) {
     std::vector<double> all_stat;
     constexpr int N = 4;
     int send_buf[N], recv_buf[N];
-    std::fill(recv_buf, recv_buf + 16, 0);
+    std::fill(recv_buf, recv_buf + N, 0);
     for (int i = 0; i < N; i++) {
         send_buf[i] = i;
     }
