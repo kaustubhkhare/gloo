@@ -121,8 +121,8 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
                 recvBuffer + recvOffset, recvBytes, partner, tag,
                 MPI_COMM_WORLD);
         std::cout << "[" << rank << " / " << round << "] S [ "
-                << sendOffset << ":" << sendBytes << "] R ["
-                << recvOffset << ":" << recvBuffer << "] - ";
+                << sendOffset << ":" << sendBytes/sizeof(int) << "] R ["
+                << recvOffset << ":" << recvBytes/sizeof(int) << "] - ";
         for (int c = recvOffset; c < endOffset; c++) {
             sendBuffer[c] += recvBuffer[c];
             std::cout << sendBuffer[c] << ", ";
@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
     int send_buf[N], recv_buf[N];
     std::fill(recv_buf, recv_buf + N, 0);
     for (int i = 0; i < N; i++) {
-        send_buf[i] = i;
+        send_buf[i] = i + rank * 100;
     }
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier(MPI_COMM_WORLD);
