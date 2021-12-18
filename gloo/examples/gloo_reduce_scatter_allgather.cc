@@ -4,33 +4,15 @@
 
 #include <iostream>
 #include <memory>
-#include <array>
-#include <typeinfo>
 #include <vector>
 #include <numeric>
 #include <mpi.h>
 #include <gloo/barrier.h>
-#include "gloo/reduce.h"
-#include "gloo/transport/tcp/device.h"
+#include "gloo/allreduce_halving_doubling.h"
 #include "gloo/rendezvous/context.h"
 #include "gloo/rendezvous/file_store.h"
 #include "gloo/rendezvous/prefix_store.h"
-
-// Usage:
-//
-// Open two terminals. Run the same program in both terminals, using
-// a different RANK in each. For example:
-//
-// A: PREFIX=test1 SIZE=2 RANK=0 example_reduce
-// B: PREFIX=test1 SIZE=2 RANK=1 example_reduce
-//
-// Expected output:
-//
-//   data[0] = 0
-//   data[1] = 3
-//   data[2] = 6
-//   data[3] = 9
-//
+#include "gloo/transport/tcp/device.h"
 
 std::shared_ptr<gloo::Context> k_context;
 int rank;
@@ -87,19 +69,6 @@ double runGather(const int rank , int size, double input) {
     }
 }
 
-void mysum(void* c_, const void* a_, const void* b_, int n) {
-    //printf("n=%d\r\n", n);
-    int* c = static_cast<int*>(c_);
-    const int* a = static_cast<const int*>(a_);
-    const int* b = static_cast<const int*>(b_);
-    for (auto i = 0; i < n; i++) {
-//        printf("a[%d]=%d\r\n", i, a[i]);
-//        printf("b[%d]=%d\r\n", i, b[i]);
-        c[i] = a[i] + b[i];
-//        printf("c[%d]=%d\r\n", i, c[i]);
-    }
-}
-
 void init(int rank, int size, std::string prefix, std::string network) {
     gloo::transport::tcp::attr attr;
     attr.iface = network;
@@ -122,9 +91,8 @@ int main(void) {
         getenv("ITERS") == nullptr ||
         getenv("NETWORK") == nullptr ||
         getenv("INPUT_SIZE") == nullptr) {
-        std::cerr
-                << "Please set environment variables PREFIX, SIZE, and RANK."
-                << std::endl;
+        std::cerr << "Please set environment variables PREFIX, SIZE, and RANK."
+                  << std::endl;
         return 1;
     }
     std::string prefix = getenv("PREFIX");
@@ -138,42 +106,47 @@ int main(void) {
 
     // All connections are now established. We can now initialize some
     // test data, instantiate the collective algorithm, and run it.
-    int *inputPointers = reinterpret_cast<int*>(malloc(sizeof(int) * inputEle));
-    int *outputPointers = reinterpret_cast<int*>(malloc(sizeof(int) * inputEle));
-    gloo::ReduceOptions opts(k_context);
-    opts.setInput(inputPointers, inputEle);
-    opts.setOutput(outputPointers, inputEle);
-    for (int i = 0; i < inputEle; i++) {
-        inputPointers[i] = i * (rank + 1);
-        outputPointers[i] = 0;
+    std::vector<int> data(inputEle);
+    std::cout << "Input: " << std::endl;
+    for (int i = 0; i < data.size(); i++) {
+        data[i] = i;
+//    std::cout << "data[" << i << "] = " << data[i] << std::endl;
     }
 
-    void (*fn)(void*, const void*, const void*, int) = &mysum;
-    opts.setReduceFunction(fn);
+    // Allreduce operates on memory that is already managed elsewhere.
+    // Every instance can take multiple pointers and perform reduction
+    // across local buffers as well. If you have a single buffer only,
+    // you must pass a std::vector with a single pointer.
+    std::vector<int*> ptrs;
+    ptrs.push_back(&data[0]);
 
-    // A small maximum segment size triggers code paths where we'll
-    // have a number of segments larger than the lower bound of
-    // twice the context size.
-    opts.setMaxSegmentSize(128);
-    opts.setRoot(size - 1);
-//    reduce(opts);
+    // The number of elements at the specified pointer.
+    int count = data.size();
+
+    // Instantiate the collective algorithm.
+    auto allreduce =
+            std::make_shared<gloo::AllreduceHalvingDoubling<int>>(
+                    k_context, ptrs, count);
+
+    // Run the algorithm.
+//    allreduce->run();
 
     for (int i = 0; i < 10; i++) {
-        reduce(opts);
+        allreduce->run();
     }
 
     std::vector<double> all_stat;
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier(MPI_COMM_WORLD);
         const auto start = std::chrono::high_resolution_clock::now();
-        reduce(opts);
+        allreduce->run();
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
         const double elapsed_ts = ets.count();
         MPI_Barrier(MPI_COMM_WORLD);
         double maxTime = runGather(rank, size, elapsed_ts);
         if (rank == 0) {
-            //std::cout << "max timing for " << i << " is " << maxTime << std::endl;
+            std::cout << "max timing for " << i << " is " << maxTime << std::endl;
             all_stat.push_back(maxTime);
         }
     }
@@ -186,10 +159,10 @@ int main(void) {
         std::cout << median << "\n";
         std::cout << avg << std::endl;
     }
-    // Print the result.
+//    // Print the result.
 //    std::cout << "Output: " << std::endl;
-//    for (int i = 0; i < 4; i++) {
-//        std::cout << "data = " << outputPointers[i] << std::endl;
+//    for (int i = 0; i < data.size(); i++) {
+//        std::cout << "data[" << i << "] = " << data[i] << std::endl;
 //    }
 
     return 0;
