@@ -125,14 +125,16 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
                 sendBuffer + sendOffset, sendBytes, partner, tag,
                 recvBuffer + recvOffset, recvBytes, partner, tag,
                 MPI_COMM_WORLD);
-        std::cout << "[" << rank << " / " << round << "] S [ "
-                << sendOffset << ":" << sendBytes/sizeof(int) << "] R ["
-                << recvOffset << ":" << recvBytes/sizeof(int) << "] - ";
-        for (int c = recvOffset; c < endOffset; c++) {
-            sendBuffer[c] += recvBuffer[c];
-            std::cout << sendBuffer[c] << ", ";
+        if (debug) {
+            std::cout << "[" << rank << " / " << round << "] S [ "
+                      << sendOffset << ":" << sendBytes / sizeof(int) << "] R ["
+                      << recvOffset << ":" << recvBytes / sizeof(int) << "] - ";
+            for (int c = recvOffset; c < endOffset; c++) {
+                sendBuffer[c] += recvBuffer[c];
+                std::cout << sendBuffer[c] << ", ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
         
         if (rank & mask){
             begin = mid;
