@@ -94,6 +94,7 @@ int GT_Gather(void *sendbuf_,
               int rank, int size);
 
 void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* recvBuffer) {
+    int debug = 0;
     const int tag = 5643;
     int partner;
     int mask = size / 2;
@@ -141,17 +142,21 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
         mask >>= 1;
     }
 
-    std::cout << "[" << rank << "] " << "At the end of scatter:";
-    for (int i = 0; i < input_size; i++)
-        std::cout << sendBuffer[i] << ", ";
-    std::cout << std::endl;
+    if (debug) {
+        std::cout << "[" << rank << "] " << "At the end of scatter:";
+        for (int i = 0; i < input_size; i++)
+            std::cout << sendBuffer[i] << ", ";
+        std::cout << std::endl;
+    }
 
     // run Gather
     GT_Gather(sendBuffer, sendBuffer, input_size, rank, size);
-    std::cout << "\n\n";
-    std::cout << "[" << rank << "] " << "At the end of gather:";
-    for (int i = 0; i < input_size; i++)
-        std::cout << sendBuffer[i] << ", ";
+    if (debug) {
+        std::cout << "\n\n";
+        std::cout << "[" << rank << "] " << "At the end of gather:";
+        for (int i = 0; i < input_size; i++)
+            std::cout << sendBuffer[i] << ", ";
+    }
 
 
     //    if (rank == 0){
@@ -184,11 +189,13 @@ int GT_Gather(void *sendbuf_,
     const int count = input_size / size;
 
     if ( (rank & 1) == 1) {
-        std::cout << "Send " << rank << " to " << (rank ^ 1) << " val=";
-        for (int i = 0; i < count; i++) {
-            std::cout << (rank * count + i) << ":" << *(sendbuf + rank * count + i) << " ";
+        if (debug) {
+            std::cout << "Send " << rank << " to " << (rank ^ 1) << " val=";
+            for (int i = 0; i < count; i++) {
+                std::cout << (rank * count + i) << ":" << *(sendbuf + rank * count + i) << " ";
+            }
+            std::cout << "\n";
         }
-        std::cout << "\n";
         return MPI_Send(sendbuf + rank * count, count * sizeof(int), rank ^ 1, tag, MPI_COMM_WORLD);
     }
 //        return MPI_Send(sendbuf + rank * count, count, recvtype, rank ^ 1, 1, comm);
@@ -209,19 +216,24 @@ int GT_Gather(void *sendbuf_,
     while (bitm < size) {
         const int partner = rank ^ bitm;
         const int offset = rank * count + bitm * count;
-        std::cout << "bitm " << bitm << "\n";
+        if (debug)
+            std::cout << "bitm " << bitm << "\n";
         if (rank & bitm) {
 //                printf("[%d] %d --> %d, off = %d, sz = %d\n", bitm, rank, partner, offset - szz, szz);
-            std::cout << "Send " << rank << " to " << (partner) << " val=";
-            for (int i = 0; i < szz; i++) {
-                std::cout << (offset - bitm * count + i) << ":" << *(recvbuf + offset - bitm * count + i) << " ";
+            if (debug) {
+                std::cout << "Send " << rank << " to " << (partner) << " val=";
+                for (int i = 0; i < szz; i++) {
+                    std::cout << (offset - bitm * count + i) << ":" << *(recvbuf + offset - bitm * count + i) << " ";
+                }
+                std::cout << "\n";
             }
-            std::cout << "\n";
             return MPI_Send(recvbuf + offset - bitm * count, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
         } else if (partner < size) {
 //            printf("[%d] %d <-- %d, off = %d, sz = %d\n", bitm, rank, partner, offset, szz);
-            std::cout << "Receiving " << rank << " from " << (partner) << " at " << offset << "->" << offset + szz;
-            std::cout << "\n";
+            if (debug) {
+                std::cout << "Receiving " << rank << " from " << (partner) << " at " << offset << "->" << offset + szz;
+                std::cout << "\n";
+            }
             MPI_Recv(recvbuf + offset, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
             szz <<= 1;
         }
@@ -302,21 +314,21 @@ int main(int argc, char* argv[]) {
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
 //    std::cout << "Running bcast" << "\n";
-//    for (int i = 0; i < 10; i++) { TODO
-//        runReduceScatter(rank, size, input_size);
-//    }
+    for (int i = 0; i < 10; i++) {
+        runReduceScatter(rank, size, input_size);
+    }
 
     std::vector<double> all_stat;
-    constexpr int N = 8;
-    int send_buf[N], recv_buf[N];
-    std::fill(recv_buf, recv_buf + N, 0);
-    for (int i = 0; i < N; i++) {
-        send_buf[i] = i + rank * 100;
-    }
+//    constexpr int N = 8;
+    int* send_buf = new int[input_size];
+    int* recv_buf = new int[input_size];
+//    std::fill(recv_buf, recv_buf + N, 0);
+//    for (int i = 0; i < N; i++) {
+//        send_buf[i] = i + rank * 100;
+//    }
     for (int i = 0; i < iterations; i++) {
         MPI_Barrier(MPI_COMM_WORLD);
         const auto start = std::chrono::high_resolution_clock::now();
-        input_size = N;
         runReduceScatter(rank, size, input_size, send_buf, recv_buf);
         const auto end = std::chrono::high_resolution_clock::now();
         const std::chrono::duration<double> ets = end - start;
