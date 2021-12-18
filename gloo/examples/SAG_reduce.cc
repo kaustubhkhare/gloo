@@ -92,9 +92,10 @@ int MPI_Send_n_Recieve(
 int GT_Gather(void *sendbuf_,
               void *recvbuf_, int input_size,
               int rank, int size);
-
+namespace {
+    constexpr int debug = 0;
+}
 void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* recvBuffer) {
-    int debug = 0;
     const int tag = 5643;
     int partner;
     int mask = size / 2;
@@ -313,9 +314,11 @@ int main(int argc, char* argv[]) {
 
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
+    int* send_buf = new int[input_size];
+    int* recv_buf = new int[input_size];
 //    std::cout << "Running bcast" << "\n";
     for (int i = 0; i < 10; i++) {
-        runReduceScatter(rank, size, input_size);
+        runReduceScatter(rank, size, input_size, send_buf, recv_buf);
     }
 
     std::vector<double> all_stat;
