@@ -147,7 +147,7 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
     std::cout << std::endl;
 
     // run Gather
-    GT_Gather(recvBuffer, recvBuffer, input_size, rank, size);
+    GT_Gather(sendBuffer, sendBuffer, input_size, rank, size);
     std::cout << "\n\n";
     std::cout << "[" << rank << "] " << "At the end of gather:";
     for (int i = 0; i < input_size; i++)
@@ -186,7 +186,7 @@ int GT_Gather(void *sendbuf_,
     if ( (rank & 1) == 1) {
         std::cout << "Send " << rank << " to " << (rank ^ 1) << " val=";
         for (int i = 0; i < count; i++) {
-            std::cout << *(sendbuf + rank * count + i) << " ";
+            std::cout << (rank * count + i) << ":" << *(sendbuf + rank * count + i) << " ";
         }
         std::cout << "\n";
         return MPI_Send(sendbuf + rank * count, count * sizeof(int), rank ^ 1, tag, MPI_COMM_WORLD);
@@ -209,11 +209,12 @@ int GT_Gather(void *sendbuf_,
     while (bitm < size) {
         const int partner = rank ^ bitm;
         const int offset = rank * count + bitm * count;
+        std::cout << "bitm " << bitm << "\n";
         if (rank & bitm) {
 //                printf("[%d] %d --> %d, off = %d, sz = %d\n", bitm, rank, partner, offset - szz, szz);
             std::cout << "Send " << rank << " to " << (partner) << " val=";
             for (int i = 0; i < szz; i++) {
-                std::cout << *(recvbuf + offset - bitm * count + i) << " ";
+                std::cout << (offset - bitm * count + i) << ":" << *(recvbuf + offset - bitm * count + i) << " ";
             }
             std::cout << "\n";
             return MPI_Send(recvbuf + offset - bitm * count, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
