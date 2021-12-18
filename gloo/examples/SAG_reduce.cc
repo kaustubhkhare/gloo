@@ -220,7 +220,7 @@ int GT_Gather(void *sendbuf_,
             return MPI_Send(recvbuf + offset - bitm * count, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
         } else if (partner < size) {
 //            printf("[%d] %d <-- %d, off = %d, sz = %d\n", bitm, rank, partner, offset, szz);
-            std::cout << "Receiving " << rank << " from " << (partner) << offset << "->" << offset + szz;
+            std::cout << "Receiving " << rank << " from " << (partner) << " at " << offset << "->" << offset + szz;
             std::cout << "\n";
             MPI_Recv(recvbuf + offset, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
             szz <<= 1;
@@ -307,7 +307,7 @@ int main(int argc, char* argv[]) {
 //    }
 
     std::vector<double> all_stat;
-    constexpr int N = 6;
+    constexpr int N = 8;
     int send_buf[N], recv_buf[N];
     std::fill(recv_buf, recv_buf + N, 0);
     for (int i = 0; i < N; i++) {
