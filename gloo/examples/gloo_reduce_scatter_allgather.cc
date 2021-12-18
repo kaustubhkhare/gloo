@@ -146,7 +146,7 @@ int main(void) {
         MPI_Barrier(MPI_COMM_WORLD);
         double maxTime = runGather(rank, size, elapsed_ts);
         if (rank == 0) {
-            std::cout << "max timing for " << i << " is " << maxTime << std::endl;
+//            std::cout << "max timing for " << i << " is " << maxTime << std::endl;
             all_stat.push_back(maxTime);
         }
     }
