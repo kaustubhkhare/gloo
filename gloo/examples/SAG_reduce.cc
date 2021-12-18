@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-std::shared_ptr<gloo::Context> k_context;
+std::shared_ptr <gloo::Context> k_context;
 int rank;
 int size;
 char hostname[HOST_NAME_MAX];
@@ -53,7 +53,7 @@ int MPI_Send(
         int dest,
         int tag,
         MPI_Comm comm) {
-    auto ubuf = k_context->createUnboundBuffer(const_cast<void*>(cbuf), bytes);
+    auto ubuf = k_context->createUnboundBuffer(const_cast<void *>(cbuf), bytes);
     ubuf->send(dest, tag);
     ubuf->waitSend();
 }
@@ -81,8 +81,8 @@ int MPI_Send_n_Recieve(
         int src,
         int stag,
         MPI_Comm comm) {
-    auto sbuf = k_context->createUnboundBuffer(const_cast<void*>(ubuf), sbytes);
-    auto rbuf = k_context->createUnboundBuffer(const_cast<void*>(vbuf), rbytes);
+    auto sbuf = k_context->createUnboundBuffer(const_cast<void *>(ubuf), sbytes);
+    auto rbuf = k_context->createUnboundBuffer(const_cast<void *>(vbuf), rbytes);
     sbuf->send(dest, dtag);
     rbuf->recv(src, stag);
     sbuf->waitSend();
@@ -92,10 +92,12 @@ int MPI_Send_n_Recieve(
 int GT_Gather(void *sendbuf_,
               void *recvbuf_, int input_size,
               int rank, int size);
+
 namespace {
     constexpr int debug = 0;
 }
-void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* recvBuffer) {
+
+void runReduceScatter(int rank, int size, int input_size, int *sendBuffer, int *recvBuffer) {
     const int tag = 5643;
     int partner;
     int mask = size / 2;
@@ -129,14 +131,15 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
             std::cout << "[" << rank << " / " << round << "] S [ "
                       << sendOffset << ":" << sendBytes / sizeof(int) << "] R ["
                       << recvOffset << ":" << recvBytes / sizeof(int) << "] - ";
-            for (int c = recvOffset; c < endOffset; c++) {
-                sendBuffer[c] += recvBuffer[c];
-                std::cout << sendBuffer[c] << ", ";
-            }
-            std::cout << std::endl;
         }
-        
-        if (rank & mask){
+        for (int c = recvOffset; c < endOffset; c++) {
+            sendBuffer[c] += recvBuffer[c];
+//                std::cout << sendBuffer[c] << ", ";
+        }
+//            std::cout << std::endl;
+
+
+        if (rank & mask) {
             begin = mid;
         } else {
             end = mid;
@@ -187,11 +190,11 @@ int GT_Gather(void *sendbuf_,
               void *recvbuf_, int input_size,
               int rank, int size) {
     const int tag = 5643;
-    int* sendbuf = (int*)sendbuf_;
-    int* recvbuf = (int*)recvbuf_;
+    int *sendbuf = (int *) sendbuf_;
+    int *recvbuf = (int *) recvbuf_;
     const int count = input_size / size;
 
-    if ( (rank & 1) == 1) {
+    if ((rank & 1) == 1) {
         if (debug) {
             std::cout << "Send " << rank << " to " << (rank ^ 1) << " val=";
             for (int i = 0; i < count; i++) {
@@ -245,15 +248,14 @@ int GT_Gather(void *sendbuf_,
 }
 
 
-
 //
-double runGather(const int rank , int size, double input) {
+double runGather(const int rank, int size, double input) {
     double sendBuffer[] = {input};
     double recvBuffer[1];
     const int tag = 564;
     std::vector<double> allTimes;
 
-    if (rank == 0){
+    if (rank == 0) {
         for (int all = 1; all < size; all++) {
 //            std::cout << "Process waiting at " << rank << " for " << all << "\n";
             MPI_Recv(recvBuffer, sizeof(recvBuffer), all, tag, MPI_COMM_WORLD);
@@ -266,9 +268,9 @@ double runGather(const int rank , int size, double input) {
     }
 
     if (rank == 0) {
-        auto it  = std::max_element(std::begin(allTimes), std::end(allTimes));
+        auto it = std::max_element(std::begin(allTimes), std::end(allTimes));
         return *it;
-    } else{
+    } else {
         return 0;
     }
 }
@@ -295,7 +297,7 @@ void init(int rank, int size, std::string prefix, std::string network) {
 //    std::cout << "rank=" << rank << "size=" << size << std::endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     if (getenv("PREFIX") == nullptr ||
         getenv("SIZE") == nullptr ||
         getenv("RANK") == nullptr ||
@@ -316,8 +318,8 @@ int main(int argc, char* argv[]) {
 
 //    std::cout << "Running init" << "\n";
     init(rank, size, prefix, network);
-    int* send_buf = new int[input_size];
-    int* recv_buf = new int[input_size];
+    int *send_buf = new int[input_size];
+    int *recv_buf = new int[input_size];
 //    std::cout << "Running bcast" << "\n";
     for (int i = 0; i < 10; i++) {
         runReduceScatter(rank, size, input_size, send_buf, recv_buf);
@@ -348,7 +350,7 @@ int main(int argc, char* argv[]) {
     if (rank == 0) {
         double sum = std::accumulate(all_stat.begin(), all_stat.end(), 0.0);
         std::sort(all_stat.begin(), all_stat.end());
-        double median = all_stat[all_stat.size()/2];
+        double median = all_stat[all_stat.size() / 2];
         double avg = sum / iterations;
         std::cout << median << "\n";
         std::cout << avg << std::endl;
