@@ -88,15 +88,15 @@ double runGather(const int rank , int size, double input) {
 }
 
 void mysum(void* c_, const void* a_, const void* b_, int n) {
-    printf("n=%d\r\n", n);
+//    printf("n=%d\r\n", n);
     int* c = static_cast<int*>(c_);
     const int* a = static_cast<const int*>(a_);
     const int* b = static_cast<const int*>(b_);
     for (auto i = 0; i < n; i++) {
-        printf("a[%d]=%d\r\n", i, a[i]);
-        printf("b[%d]=%d\r\n", i, b[i]);
+//        printf("a[%d]=%d\r\n", i, a[i]);
+//        printf("b[%d]=%d\r\n", i, b[i]);
         c[i] = a[i] + b[i];
-        printf("c[%d]=%d\r\n", i, c[i]);
+//        printf("c[%d]=%d\r\n", i, c[i]);
     }
 }
 
