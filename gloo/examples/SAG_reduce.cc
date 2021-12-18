@@ -178,6 +178,7 @@ void runReduceScatter(int rank, int size, int input_size, int* sendBuffer, int* 
 int GT_Gather(void *sendbuf_,
               void *recvbuf_, int input_size,
               int rank, int size) {
+    const int tag = 5643;
     int* sendbuf = (int*)sendbuf_;
     int* recvbuf = (int*)recvbuf_;
     const int count = input_size / size;
@@ -200,13 +201,13 @@ int GT_Gather(void *sendbuf_,
 //    if ((rank & 1) == 0)
 //        memcpy(recvbuf + rank * count, sendbuf, count * sizeof(int));
     int szz = count;
-    while (bitm < n) {
+    while (bitm < size) {
         const int partner = rank ^ bitm;
         const int offset = rank * count + bitm * count;
         if (rank & bitm) {
 //                printf("[%d] %d --> %d, off = %d, sz = %d\n", bitm, rank, partner, offset - szz, szz);
             return MPI_Send(recvbuf + offset - bitm * count, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
-        } else if (partner < n) {
+        } else if (partner < size) {
 //            printf("[%d] %d <-- %d, off = %d, sz = %d\n", bitm, rank, partner, offset, szz);
             MPI_Recv(recvbuf + offset, szz * sizeof(int), partner, tag, MPI_COMM_WORLD);
             szz <<= 1;
