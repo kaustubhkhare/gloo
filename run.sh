@@ -3,8 +3,8 @@ cd /proj/UWMadison744-F21/groups/akc/gloo/build
 #iters=(30000 20000 13333 8888 5925 3950 2633 1500 1000)
 #iters=(1, 1)
 #iters=(1 1 1 1 1 1 1 1 1)
-iters=(1 500 500 500 500 500 500 500 500)
-cnt=(10 100 500 1000 5000 20000 80000 100000 140000)
+iters=(500 500 500 500 500 500 500 500)
+cnt=(8 16 512 1024 4096 16384 65536 131072)
 #cnt=(2000000, 5000000)
 rm ~/logs/${4}-${1}.log
 #netw=$((ifconfig | grep -B1 $(ping -c1 $(hostname | cut -d "." -f1) | head -1 | cut -d " " -f3 | cut -c2- | rev | cut -c2- | rev)) | head -1 | cut -d " " -f1 | rev | cut -c2- | rev)
