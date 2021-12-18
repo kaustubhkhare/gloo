@@ -323,8 +323,6 @@ int main(int argc, char* argv[]) {
 
     std::vector<double> all_stat;
 //    constexpr int N = 8;
-    int* send_buf = new int[input_size];
-    int* recv_buf = new int[input_size];
 //    std::fill(recv_buf, recv_buf + N, 0);
 //    for (int i = 0; i < N; i++) {
 //        send_buf[i] = i + rank * 100;
