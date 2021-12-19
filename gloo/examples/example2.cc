@@ -167,12 +167,12 @@ int main(void) {
     }
 
     // Print the result.
-    if (rank == size -1) {
-        std::cout << "Output: " << std::endl;
-        for (int i = 0; i < inputEle; i++) {
-            std::cout << "data[" << i << "] = " << outputPointers[i] << std::endl;
-        }
-    }
+//    if (rank == size -1) {
+//        std::cout << "Output: " << std::endl;
+//        for (int i = 0; i < inputEle; i++) {
+//            std::cout << "data[" << i << "] = " << outputPointers[i] << std::endl;
+//        }
+//    }
 
     return 0;
 }
